@@ -1,0 +1,12 @@
+CODE FOR STUDYING SUBSTRUCTURE VARIABLE
+TO BE APPLIED TO SUSY ANALYSES.
+
+
+####################
+# git instructions #
+####################
+
+git init myWorkingArea
+cd myWorkingArea
+git remote add origin https://github.com/awhitbeck/SuSySubstructure
+git pull origin master
