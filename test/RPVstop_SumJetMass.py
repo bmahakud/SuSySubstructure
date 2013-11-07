@@ -1,3 +1,4 @@
+
 import FWCore.ParameterSet.Config as cms
 
 process = cms.Process("demo")
@@ -19,7 +20,9 @@ process.options   = cms.untracked.PSet(
 ##################################
 
 # SELECTS EVENTS IN WHICH ALL TOPS DECAY HADRONICALLY
-process.AllHadronicFilter = cms.EDFilter("AllHadronicGenFilter")
+process.AllHadronicFilter = cms.EDFilter("AllHadronicGenFilter",
+                                         debug = cms.untracked.bool(False)
+                                         )
 
 # CLUSTER GEN PARTICLES
 
@@ -55,7 +58,7 @@ process.SumJetMassTreeFiller = cms.EDAnalyzer("GenJetTreeFiller",
 ## CONFIGURE TFILESERVICE
 
 process.TFileService = cms.Service("TFileService",
-      fileName = cms.string("T1tttt_SumJetMass_AnalysisTree.root"),
+      fileName = cms.string("RPVstop_SumJetMass_AnalysisTree.root"),
       closeFileFast = cms.untracked.bool(True)
   )
 
@@ -66,7 +69,8 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 #process.load("AWhitbeck.SuSySubstructure.testSample_cff")
 #process.load("AWhitbeck.SuSySubstructure.ZHbbSample_cff")
 #process.load("AWhitbeck.SuSySubstructure.ZjetsSample_cff")
-process.load("AWhitbeck.SuSySubstructure.T1ttttSample_cff")
+#process.load("AWhitbeck.SuSySubstructure.T1ttttSample_cff")
+process.load("AWhitbeck.SuSySubstructure.RPVstopSample_cff")
 #process.load("AWhitbeck.SuSySubstructure.QCDSample_cff")
 
 ##  DEFINE PATH

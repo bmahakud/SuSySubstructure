@@ -63,12 +63,12 @@ process.TFileService = cms.Service("TFileService",
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 ##  LOAD DATAFILES
-#process.load("AWhitbeck.JetHisto.testSample_cff")
-#process.load("AWhitbeck.JetHisto.ZHbbSample_cff")
-process.load("AWhitbeck.JetHisto.ZjetsSample_cff")
-#process.load("AWhitbeck.JetHisto.WjetsSample_cff")
-#process.load("AWhitbeck.JetHisto.T1ttttSample_cff")
-#process.load("AWhitbeck.JetHisto.QCDSample_cff")
+#process.load("AWhitbeck.SuSySubstructure.testSample_cff")
+#process.load("AWhitbeck.SuSySubstructure.ZHbbSample_cff")
+process.load("AWhitbeck.SuSySubstructure.ZjetsSample_cff")
+#process.load("AWhitbeck.SuSySubstructure.WjetsSample_cff")
+#process.load("AWhitbeck.SuSySubstructure.T1ttttSample_cff")
+#process.load("AWhitbeck.SuSySubstructure.QCDSample_cff")
 
 ##  DEFINE PATH
 process.p = cms.Path(process.AllHadronicFilter

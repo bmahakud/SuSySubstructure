@@ -109,28 +109,73 @@ AllHadronicGenFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     if ( abs(iCand->pdgId()) == 6 ) {
       
-      // find which top daughter is the 
-      int bosonicDaughter;
-    
-      if ( abs(iCand->daughter(0)->pdgId()) == 24 ) bosonicDaughter = 0;
-      else if ( abs(iCand->daughter(1)->pdgId()) == 24 ) bosonicDaughter = 1;
-      else continue;
-        
-      if(debug){
+      if ( debug ){
 	std::cout << "top quark found: " << std::endl;
-	std::cout << "        W decay: " 
-		  << iCand->daughter(bosonicDaughter)->daughter(0)->pdgId() 
-		  << ", " 
-		  << iCand->daughter(bosonicDaughter)->daughter(1)->pdgId() 
-		  << std::endl;
+	std::cout << "daughters: " << iCand->numberOfDaughters() << std::endl;
+	
+	for ( unsigned int iDaughter = 0 ; iDaughter < iCand->numberOfDaughters() ; iDaughter++ ){
+	  std::cout << iCand->daughter(iDaughter)->pdgId() << "  " ;
+	}  
+
+      }
+    
+      const reco::Candidate* topCand = &*iCand;
+      while ( abs( topCand->daughter(0)->pdgId() ) == 6 ){
+	topCand = topCand->daughter(0);
+      }
+	
+      // find which top daughter is the W
+      const reco::Candidate* Wcand;
+    
+      if ( abs(topCand->daughter(0)->pdgId()) == 24 ) Wcand = topCand->daughter(0) ;
+      else if ( abs(topCand->daughter(1)->pdgId()) == 24 ) Wcand = topCand->daughter(1) ;
+      else{
+	std::cout << "NO W FOUND IN TOP DECAY!!!" << std::endl;
+	continue;
+      }
+
+      if ( debug )
+	std::cout << "    W found: " << std::endl;
+
+      if(debug){
+	std::cout << "        W status: " << Wcand->status() << std::endl;
+	std::cout << "        W decay: " ;
+	
+	const reco::Candidate* tempCand = Wcand ; 
+	
+	while ( abs(tempCand->pdgId()) == 24 ){
+	  
+	  for ( unsigned int iWdaughter = 0 ; iWdaughter < tempCand->numberOfDaughters() ; iWdaughter++ ){
+	    std::cout << tempCand->daughter(iWdaughter)->pdgId() << "  " ;
+	    
+	  }
+	  
+	  tempCand = tempCand->daughter(0);
+	    
+	}
+
+	std::cout << std::endl;
+	//std::cout << "last W daughter: " << tempCand->pdgId() << std::endl;
+
       }
 
       // check for leptonic W decay
-      if( abs(iCand->daughter(bosonicDaughter)->daughter(0)->pdgId()) > 6 ) return false; 
+      while ( abs( Wcand->daughter(0)->pdgId() ) == 24 ){
+	Wcand = Wcand->daughter(0);
+      }
 
-    }
+      if( Wcand->numberOfDaughters() == 2 ){
+	if( abs( Wcand->daughter(0)->pdgId() ) > 6 ){
+	  return false; // leptonic W decay
+	}
+      }else{
+	std::cout << "AHHHHHHHHHHHHHHH!!!" << std::endl;
+	return false;  // something wrong with W decay...
+      }
 
-  }
+    } // check if iCand is a top
+
+  } // end loop over iCand
 
   return true;
 
