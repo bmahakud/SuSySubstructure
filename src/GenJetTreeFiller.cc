@@ -46,6 +46,8 @@
 #include <fastjet/PseudoJet.hh>
 #include <fastjet/JetDefinition.hh>
 
+#include "SubjetCounting.hh"
+
 #include <vector>
 
 
@@ -83,6 +85,8 @@ private:
 
     double sumJetMass_pt50;
     double sumJetMass_pt30;
+    int nSubJets_pt50;
+    int nSubJets_pt30;
     double Ht_pt30;
     double Ht_pt50;
     double met_pt30;    
@@ -119,6 +123,8 @@ GenJetTreeFiller::GenJetTreeFiller(const edm::ParameterSet& iConfig):
   GenJetTree->Branch("jetMass_pt50",&myTree.jetMass_pt50);
   GenJetTree->Branch("sumJetMass_pt30",&myTree.sumJetMass_pt30,"sumJetMass_pt30/D");
   GenJetTree->Branch("sumJetMass_pt50",&myTree.sumJetMass_pt50,"sumJetMass_pt50/D");
+  GenJetTree->Branch("nSubJets_pt30",&myTree.nSubJets_pt30,"nSubJets_pt30/I");
+  GenJetTree->Branch("nSubJets_pt50",&myTree.nSubJets_pt50,"nSubJets_pt50/I");
   GenJetTree->Branch("Ht_pt30",&myTree.Ht_pt30,"Ht_pt30/D");
   GenJetTree->Branch("Ht_pt50",&myTree.Ht_pt50,"Ht_pt50/D");
   GenJetTree->Branch("met_pt30",&myTree.met_pt30,"met_pt30/D");
@@ -166,6 +172,9 @@ GenJetTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   myTree.sumJetMass_pt30 = 0.;
   myTree.sumJetMass_pt50 = 0.;
 
+  myTree.nSubJets_pt50   = 0.;
+  myTree.nSubJets_pt30   = 0.;
+
   myTree.Ht_pt30         = 0.;
   myTree.Ht_pt50         = 0.;
 
@@ -212,19 +221,67 @@ GenJetTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
     }
 
   }
+  
+  // need to recluster fatjets inorder to pass fastjet::pseudojet collection
+  // to fastjet::contrib::SubjetCountingCA because reco::jets doesn't
+  // save information about constituents
 
-  for(View<reco::GenJet>::const_iterator iFatJet = fatJetCands->begin();
-      iFatJet != fatJetCands->end();
-      ++iFatJet){
+  Handle< View<reco::GenParticle> > genCands;
+  iEvent.getByLabel("genParticlesForJetsNoNu",genCands);
 
+  std::vector<fastjet::PseudoJet> fatJetConst;
+
+  for(View<reco::GenParticle>::const_iterator iCand = genCands->begin();
+      iCand != genCands->end();
+      ++iCand){
     
-    if( iFatJet->pt() > 50. &&
-	fabs( iFatJet->eta() < 2.5 ) )
-	myTree.sumJetMass_pt50 += iFatJet->mass();
+    fatJetConst.push_back( fastjet::PseudoJet( iCand->px(), 
+					       iCand->py(),
+					       iCand->pz(),
+					       iCand->energy() ) );
 
-    if( iFatJet->pt() > 30. &&
-	fabs( iFatJet->eta() < 2.5 ) )
-	myTree.sumJetMass_pt30 += iFatJet->mass();
+  }
+    
+  //std::cout << "n jet constituents: " << fatJetConst.size() << std::endl;
+
+  fastjet::JetDefinition aktp12(fastjet::antikt_algorithm, 1.2);
+  fastjet::ClusterSequence cs_aktp12(fatJetConst, aktp12);
+  std::vector<fastjet::PseudoJet> fatJets = sorted_by_pt(cs_aktp12.inclusive_jets());
+  
+  // initialize object for counting subjets
+  //               SubjetCountingCA(mass_cutoff,ycut,R_min,pt_cut);
+                                    
+  fastjet::contrib::SubjetCountingCA subjetCounter_pt50(50.,0.15,0.15,50.);
+  fastjet::contrib::SubjetCountingCA subjetCounter_pt30(30.,0.10,0.15,40.);
+
+  //std::cout << "N fat jets: " << fatJets.size() << std::endl;
+
+  for( unsigned int iFatJet = 0 ; iFatJet < fatJets.size() ; iFatJet++ ){
+
+    //std::cout << "fat jet pt : " << fatJets[ iFatJet ].pt() << std::endl;
+    //std::cout << "fat jet eta: " << fatJets[ iFatJet ].eta() << std::endl;
+
+    if( fatJets[ iFatJet ].pt() > 50. &&
+	fabs( fatJets[ iFatJet ].eta() < 2.5 ) ){
+      
+        myTree.sumJetMass_pt50 += fatJets[ iFatJet ].m();
+	
+	//std::cout << "jet mass: " << fatJets[ iFatJet ].m() << std::endl;
+
+	myTree.nSubJets_pt50 = subjetCounter_pt50.result( fatJets[ iFatJet ] );
+      
+    }
+
+    if( fatJets[ iFatJet ].pt() > 30. &&
+	fabs( fatJets[ iFatJet ].eta() < 2.5 ) ){
+
+	myTree.sumJetMass_pt30 += fatJets[ iFatJet ].m();
+
+	//std::cout << "jet mass: " << fatJets[ iFatJet ].m() << std::endl;
+
+	myTree.nSubJets_pt30 = subjetCounter_pt30.result( fatJets[ iFatJet ] );
+
+    }
 
   }
 

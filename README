@@ -7,3 +7,7 @@ TO BE APPLIED TO SUSY ANALYSES.
 ####################
 
 git clone https://github.com/awhitbeck/SuSySubstructure.git AWhitbeck/SuSySubstructure 
+cd AWhitbeck/SuSySubstructure
+./retrieveFastJetTools.sh
+
+# compile with scram b

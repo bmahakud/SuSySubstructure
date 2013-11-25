@@ -11,12 +11,13 @@ if [ -a "${DIR_NAME}.tar.gz" ]
     then 
     
     gunzip "${DIR_NAME}.tar.gz"
-    tar -xvf "${DIR_NAME}.tar"
+    tar -xf "${DIR_NAME}.tar"
 
     if [ -d "${DIR_NAME}/SubjetCounting" ] 
 	then 
 	cp $DIR_NAME/SubjetCounting/*.cc src/.
 	cp $DIR_NAME/SubjetCounting/*.hh src/.
+	cp $DIR_NAME/SubjetCounting/example.cc src/SubjetCounting_example.cc
     else
 	echo "ERROR: 3rd party tool, SubjetCounting doesn't seem to exist"
     fi
@@ -25,6 +26,7 @@ if [ -a "${DIR_NAME}.tar.gz" ]
 	then 
 	cp $DIR_NAME/Nsubjettiness/*.cc src/.
 	cp $DIR_NAME/Nsubjettiness/*.hh src/.
+	cp $DIR_NAME/Nsubjettiness/example.cc src/Nsubjetiness_example.cc
     else
 	echo "ERROR: 3rd party tool, Nsubjettiness doesn't seem to exist"
     fi
