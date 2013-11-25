@@ -164,12 +164,19 @@ AllHadronicGenFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
 	Wcand = Wcand->daughter(0);
       }
 
-      if( Wcand->numberOfDaughters() == 2 ){
+      if( Wcand->numberOfDaughters() >= 2 ){
 	if( abs( Wcand->daughter(0)->pdgId() ) > 6 ){
 	  return false; // leptonic W decay
 	}
       }else{
-	std::cout << "AHHHHHHHHHHHHHHH!!!" << std::endl;
+	std::cout << "Something is wrong with W decay..." << std::endl;
+	std::cout << "number W daughters: " ;
+
+	for ( unsigned int iWdaughter = 0 ; iWdaughter < Wcand->numberOfDaughters() ; iWdaughter++ ){
+	  std::cout << "(" << Wcand->daughter(iWdaughter)->pdgId() << ", " << Wcand->daughter(iWdaughter)->status() << ") " ;
+	}
+
+	std::cout << std::endl;
 	return false;  // something wrong with W decay...
       }
 
