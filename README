@@ -11,3 +11,30 @@ cd AWhitbeck/SuSySubstructure
 ./retrieveFastJetTools.sh
 
 # compile with scram b
+
+####################
+# analyzer w/crab  #
+####################
+
+# background files
+crab -create -submit -cfg QCD_SumJetMass_crab.cfg
+crab -create -submit -cfg Top_SumJetMass_crab.cfg
+crab -create -submit -cfg WJets_SumJetMass_crab.cfg
+crab -create -submit -cfg ZJets_SumJetMass_crab.cfg
+
+# signal files are small enough to be run
+# locally 
+cmsRun T1tttt_SumJetMass.py
+cmsRun T1tttt_mG-1150_mLSP-475_SumJetMass.py
+cmsRun T1tttt_mG-1150_mLSP-900_SumJetMass.py
+cmsRun RPVstop_SumJetMass.py
+
+####################
+# hadd from dcache #
+####################
+
+./copyAnalysisTreeFromDcache.sh WJetsToLNu_HT-400ToInf_8TeV_SumJetMass/ WJets
+./copyAnalysisTreeFromDcache.sh ZJetsToNuNu_400_HT_inf_TuneZ2Star_8TeV_SumJetMass ZJets
+./copyAnalysisTreeFromDcache.sh TT_CT10_TuneZ2star_8TeV-powheg-tauola_SumJetMass/ Top
+./copyAnalysisTreeFromDcache.sh QCD_Pt-15to3000_TuneZ2star_Flat_8TeV_pythia6_SumJetMass/ QCD
+

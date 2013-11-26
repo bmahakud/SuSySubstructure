@@ -256,9 +256,9 @@ GenJetTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   fastjet::contrib::SubjetCountingCA subjetCounter_pt30(30.,0.10,0.15,30.);
 
   // Event selections!!!
-  if( fatJets.size() < 4 ) return;
-  if( fatJets[ 0 ].pt() < 100. || fatJets[ 1 ].pt() < 100. 
-      || fatJets[ 2 ].pt() < 50. || fatJets[ 3 ].pt() < 50.  ) return;
+  //if( fatJets.size() < 4 ) return;
+  //if( fatJets[ 0 ].pt() < 100. || fatJets[ 1 ].pt() < 100. 
+  //    || fatJets[ 2 ].pt() < 50. || fatJets[ 3 ].pt() < 50.  ) return;
       
   //std::cout << "New Event ------------" << std::endl;
 
