@@ -51,7 +51,6 @@
 #include <vector>
 
 
-
 class GenJetTreeFiller : public edm::EDAnalyzer {
 
 public:
@@ -234,6 +233,8 @@ GenJetTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   for(View<reco::GenParticle>::const_iterator iCand = genCands->begin();
       iCand != genCands->end();
       ++iCand){
+
+    if( fabs( iCand->eta() ) > 5.0 ) continue;
     
     fatJetConst.push_back( fastjet::PseudoJet( iCand->px(), 
 					       iCand->py(),
@@ -252,39 +253,41 @@ GenJetTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   //               SubjetCountingCA(mass_cutoff,ycut,R_min,pt_cut);
                                     
   fastjet::contrib::SubjetCountingCA subjetCounter_pt50(50.,0.15,0.15,50.);
-  fastjet::contrib::SubjetCountingCA subjetCounter_pt30(30.,0.10,0.15,40.);
+  fastjet::contrib::SubjetCountingCA subjetCounter_pt30(30.,0.10,0.15,30.);
 
-  //std::cout << "N fat jets: " << fatJets.size() << std::endl;
+  // Event selections!!!
+  if( fatJets.size() < 4 ) return;
+  if( fatJets[ 0 ].pt() < 100. || fatJets[ 1 ].pt() < 100. 
+      || fatJets[ 2 ].pt() < 50. || fatJets[ 3 ].pt() < 50.  ) return;
+      
+  //std::cout << "New Event ------------" << std::endl;
 
   for( unsigned int iFatJet = 0 ; iFatJet < fatJets.size() ; iFatJet++ ){
 
-    //std::cout << "fat jet pt : " << fatJets[ iFatJet ].pt() << std::endl;
-    //std::cout << "fat jet eta: " << fatJets[ iFatJet ].eta() << std::endl;
+    /*
+    std::cout << "fat jet pt   : " << fatJets[ iFatJet ].pt() << std::endl;
+    std::cout << "fat jet mass : " << fatJets[ iFatJet ].m() << std::endl;
+    std::cout << "fat jet eta  : " << fatJets[ iFatJet ].eta() << std::endl;
+    */
 
-    if( fatJets[ iFatJet ].pt() > 50. &&
+    if( fatJets[ iFatJet ].pt() > 50. && 
 	fabs( fatJets[ iFatJet ].eta() < 2.5 ) ){
-      
-        myTree.sumJetMass_pt50 += fatJets[ iFatJet ].m();
-	
-	//std::cout << "jet mass: " << fatJets[ iFatJet ].m() << std::endl;
 
-	myTree.nSubJets_pt50 = subjetCounter_pt50.result( fatJets[ iFatJet ] );
+      myTree.sumJetMass_pt50 += fatJets[ iFatJet ].m();
+      myTree.nSubJets_pt50 += subjetCounter_pt50.result( fatJets[ iFatJet ] );
       
-    }
+    }// end calculations for fat jets with pt > 50 GeV
 
     if( fatJets[ iFatJet ].pt() > 30. &&
 	fabs( fatJets[ iFatJet ].eta() < 2.5 ) ){
 
 	myTree.sumJetMass_pt30 += fatJets[ iFatJet ].m();
+	myTree.nSubJets_pt30 += subjetCounter_pt30.result( fatJets[ iFatJet ] );
 
-	//std::cout << "jet mass: " << fatJets[ iFatJet ].m() << std::endl;
+    }// end calculations for fat jets with pt > 30 GeV
 
-	myTree.nSubJets_pt30 = subjetCounter_pt30.result( fatJets[ iFatJet ] );
-
-    }
 
   }
-
 
   myTree.met_pt30   = sqrt( pow( negativePx_pt30 , 2 ) + pow( negativePy_pt30 , 2 ) ) ;
   myTree.met_pt50   = sqrt( pow( negativePx_pt50 , 2 ) + pow( negativePy_pt50 , 2 ) ) ;

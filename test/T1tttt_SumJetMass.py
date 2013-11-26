@@ -59,7 +59,9 @@ process.TFileService = cms.Service("TFileService",
       closeFileFast = cms.untracked.bool(True)
   )
 
-##  MAXIMUM NUMBER OF EVENTS TO PROCESS
+##  EVENTS TO PROCESS
+
+#process.skipEvents = cms.untracked.PSet( input = cms.untracked.uint32(5000) )
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 ##  LOAD DATAFILES
