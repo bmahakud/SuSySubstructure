@@ -119,9 +119,6 @@ Substructure::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   using namespace edm;
 
-  Handle< View<reco::GenJet> > jetCands;
-  iEvent.getByLabel(jetCollection,jetCands);
-
   Handle< View<reco::GenParticle> > PFCands;
   iEvent.getByLabel(PFCandCollection,PFCands);
 
@@ -141,36 +138,25 @@ Substructure::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
     
   }// end loop of PF candidates
 
-  // testing .....
-
   std::vector<fastjet::PseudoJet> fatJets;
 
   fastjet::JetDefinition aktp12(fastjet::antikt_algorithm, clusterRadius);
   fastjet::ClusterSequence cs_aktp12(constituents, aktp12);
   fatJets = sorted_by_pt(cs_aktp12.inclusive_jets());
 
-  for(View<reco::GenJet>::const_iterator iJet = jetCands->begin();
-      iJet != jetCands->end();
-      ++iJet){
-   
-    if( iJet->pt() > 20. )
-      std::cout << "std jet pt: " << iJet->pt() << std::endl;
- 
-  }
-  
-  for(unsigned int iJet = 0 ; 
-      iJet < fatJets.size();
-      ++iJet){
-   
-    if( fatJets[iJet].pt() > 20. ) 
-      std::cout << "hand jet pt: " << fatJets[iJet].pt() << std::endl;
- 
-  }  
 
-  // ..... testing
+  if( debug ) {
 
-  return; 
-  
+    for(unsigned int iJet = 0 ; 
+	iJet < fatJets.size();
+	++iJet){
+      
+      if( fatJets[iJet].pt() > 20. ) 
+	std::cout << "hand jet pt: " << fatJets[iJet].pt() << std::endl;
+      
+    }  
+  }// end debug...
+
   // initialize object for counting subjets
   //               SubjetCountingCA(mass_cutoff,ycut,R_min,pt_cut);    
   fastjet::contrib::SubjetCountingCA subjetCounter_pt50(50.,0.15,0.15,50.);
@@ -178,71 +164,31 @@ Substructure::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   std::auto_ptr<double> sumJetMass ( new double(0.0) );
   std::auto_ptr<double> nSubJets   ( new double(0.0) );
 
-  std::cout << "new events" << std::endl;
-  std::cout << "===================" << std::endl;
+  if( debug ) {
+    std::cout << "new events" << std::endl;
+    std::cout << "===================" << std::endl;
+  }
 
-  for(View<reco::GenJet>::const_iterator iJet = jetCands->begin();
-      iJet != jetCands->end();
+  *sumJetMass = 0.0;
+  *nSubJets   = 0.0;      
+
+  for(unsigned int iJet = 0 ; 
+      iJet < fatJets.size();
       ++iJet){
-
-    std::vector<fastjet::PseudoJet> jetConst;    
-    std::vector<fastjet::PseudoJet> fatJets;
-
+    
     // kinematic selection for jets
-    if ( iJet->pt() > 50. &&
-	 fabs( iJet->eta() ) < 2.5 ){
-
-      // recluster PFCandidates
-
-      *sumJetMass = 0.0;
-      *nSubJets   = 0.0;      
-
-      // loop over all constituents
-      for(unsigned int iConst = 0 ; 
-	  iConst < constituents.size();
-	  ++iConst){
-	
-	double dR = sqrt( 
-			 pow( constituents[ iConst ].eta() - iJet->eta() , 2 ) + 
-			 pow( constituents[ iConst ].phi() - iJet->phi() , 2 )
-	                 );
-
-	if( dR < 1.2 ){
-
-	  jetConst.push_back( constituents[ iConst ] );
-	  constituents.erase( constituents.begin() + iConst );
-
-	} 
-
-      }// end loop of PF candidates
-
-      fastjet::JetDefinition aktp12(fastjet::antikt_algorithm, clusterRadius);
-      fastjet::ClusterSequence cs_aktp12(jetConst, aktp12);
-      fatJets = sorted_by_pt(cs_aktp12.inclusive_jets());
-
-      if( fatJets.size() > 1 ) std::cout << "ERROR: " << fatJets.size() << " were clustered, but only 1 was expected. \n Only the first jet will be used." << std::endl;
-
-      if( debug ){
-
-	std::cout << "std Jet collection: " << iJet->pt() << std::endl;
-	
-	std::cout << "hand clustered jet: " << std::endl;
-	for ( unsigned int k = 0 ; k < fatJets.size() ; k++){
-	  std::cout << "pt: " << fatJets[ k ].pt() << std::endl;
-	}
-      }
-
-      std::cout << "-----------------------" << std::endl;
-
+    if ( fatJets[iJet].pt() > 50. &&
+	 fabs( fatJets[iJet].eta() ) < 2.5 ){
+      
       if( fatJets.size() > 0 ) {
 	
-	*sumJetMass += fatJets[ 0 ].m();
-	*nSubJets   += subjetCounter_pt50.result( fatJets[ 0 ] );
-      
+	*sumJetMass += fatJets[ iJet ].m();
+	*nSubJets   += subjetCounter_pt50.result( fatJets[ iJet ] );
+	
       }
-
+      
     }// end calculations for fat jets with pt > 50 GeV
-
+    
   }// end loop over jets
 
   iEvent.put(sumJetMass, jetCollection+"sumJetMass" );
