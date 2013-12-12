@@ -190,6 +190,8 @@ GenJetTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
       iJet != jetCands->end();
       ++iJet){
 
+    //std::cout  << "num. jets: " << jetCands->size() << std::endl;
+
     // kinematic selection for jets
     if ( iJet->pt() > 50. &&
 	 fabs( iJet->eta() ) < 2.5 ){
@@ -245,7 +247,7 @@ GenJetTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
     
   //std::cout << "n jet constituents: " << fatJetConst.size() << std::endl;
 
-  fastjet::JetDefinition aktp12(fastjet::antikt_algorithm, 1.2);
+  fastjet::JetDefinition aktp12(fastjet::antikt_algorithm, 0.5);
   fastjet::ClusterSequence cs_aktp12(fatJetConst, aktp12);
   std::vector<fastjet::PseudoJet> fatJets = sorted_by_pt(cs_aktp12.inclusive_jets());
   
@@ -261,6 +263,8 @@ GenJetTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   //    || fatJets[ 2 ].pt() < 50. || fatJets[ 3 ].pt() < 50.  ) return;
       
   //std::cout << "New Event ------------" << std::endl;
+
+  //std::cout << "num. jets from fastjet: " << fatJets.size() << std::endl;
 
   for( unsigned int iFatJet = 0 ; iFatJet < fatJets.size() ; iFatJet++ ){
 
