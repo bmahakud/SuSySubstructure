@@ -91,9 +91,7 @@ Substructure::Substructure(const edm::ParameterSet& iConfig):
   debug(iConfig.getUntrackedParameter<bool>("debug",true))
 {
   produces<double>(jetCollection+"nSubJets");
-  produces<double>(jetCollection+"nSubJetsTEST");
   produces<double>(jetCollection+"sumJetMass");
-  produces<double>(jetCollection+"sumJetMassTEST");
 }
 
 
@@ -119,78 +117,100 @@ Substructure::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   using namespace edm;
 
+  Handle< View<reco::GenJet> > jetCands;
+  iEvent.getByLabel(jetCollection,jetCands);
+
   Handle< View<reco::GenParticle> > PFCands;
   iEvent.getByLabel(PFCandCollection,PFCands);
 
-  // get particles to cluster
-  std::vector<fastjet::PseudoJet> constituents;      
-
-  for(View<reco::GenParticle>::const_iterator iPFCand = PFCands->begin();
-      iPFCand != PFCands->end();
-      ++iPFCand){
-
-    if( fabs( iPFCand->eta() ) > 5.0 ) continue;
-	
-    constituents.push_back( fastjet::PseudoJet( iPFCand->px(), 
-						iPFCand->py(),
-						iPFCand->pz(),
-						iPFCand->energy() ) );
-    
-  }// end loop of PF candidates
-
-  std::vector<fastjet::PseudoJet> fatJets;
-
-  fastjet::JetDefinition aktp12(fastjet::antikt_algorithm, clusterRadius);
-  fastjet::ClusterSequence cs_aktp12(constituents, aktp12);
-  fatJets = sorted_by_pt(cs_aktp12.inclusive_jets());
-
-
-  if( debug ) {
-
-    for(unsigned int iJet = 0 ; 
-	iJet < fatJets.size();
-	++iJet){
-      
-      if( fatJets[iJet].pt() > 20. ) 
-	std::cout << "hand jet pt: " << fatJets[iJet].pt() << std::endl;
-      
-    }  
-  }// end debug...
-
   // initialize object for counting subjets
   //               SubjetCountingCA(mass_cutoff,ycut,R_min,pt_cut);    
+  std::vector<fastjet::PseudoJet> fatJets;
+  std::vector<fastjet::PseudoJet> constituents;      
+  
+  fastjet::JetDefinition aktp12(fastjet::antikt_algorithm, clusterRadius);
+  
   fastjet::contrib::SubjetCountingCA subjetCounter_pt50(50.,0.15,0.15,50.);
+  // --------------------------------------------------------------
 
   std::auto_ptr<double> sumJetMass ( new double(0.0) );
   std::auto_ptr<double> nSubJets   ( new double(0.0) );
 
-  if( debug ) {
+  if( debug ){
     std::cout << "new events" << std::endl;
     std::cout << "===================" << std::endl;
   }
 
-  *sumJetMass = 0.0;
-  *nSubJets   = 0.0;      
-
-  for(unsigned int iJet = 0 ; 
-      iJet < fatJets.size();
+  // loop over all jets to recluster and recover clutser sequence
+  // NOTE: this might not produce the EXACT sequence from the original
+  // clustering, but it should be close (might ask experts)
+  for(View<reco::GenJet>::const_iterator iJet = jetCands->begin();
+      iJet != jetCands->end();
       ++iJet){
-    
-    // kinematic selection for jets
-    if ( fatJets[iJet].pt() > 50. &&
-	 fabs( fatJets[iJet].eta() ) < 2.5 ){
       
-      if( fatJets.size() > 0 ) {
-	
-	*sumJetMass += fatJets[ iJet ].m();
-	*nSubJets   += subjetCounter_pt50.result( fatJets[ iJet ] );
-	
-      }
-      
-    }// end calculations for fat jets with pt > 50 GeV
-    
-  }// end loop over jets
+    if ( debug ) {
 
+      if( iJet->pt() > 20. )
+	std::cout << "std jet pt: " << iJet->pt() << std::endl;
+
+    }// end debug
+
+    // get jet constituents
+    constituents.clear();      
+    std::vector< const reco::Candidate * > jetConst = iJet->getJetConstituentsQuick();
+    // loop over jet constituents for iJet
+    for ( unsigned int  iJetConst = 0 ; 
+	  iJetConst < jetConst.size() ;
+	  iJetConst++ ){
+
+      // get pseudojets to cluster
+      constituents.push_back( fastjet::PseudoJet( jetConst[ iJetConst ]->px(), 
+						  jetConst[ iJetConst ]->py(),
+						  jetConst[ iJetConst ]->pz(),
+						  jetConst[ iJetConst ]->energy() ) );
+
+      if( debug ) {
+	std::cout << "jet const. p_{mu}: " 
+		  << jetConst[ iJetConst ]->px() << " " 
+		  << jetConst[ iJetConst ]->py() << " " 
+		  << jetConst[ iJetConst ]->pz() << " " 
+		  << jetConst[ iJetConst ]->energy() << std::endl;
+      }// end debug
+      
+    }// end loop over ith jet's constituents
+
+    // recluster 
+    fastjet::ClusterSequence cs_aktp12(constituents, aktp12);
+    fatJets = sorted_by_pt(cs_aktp12.inclusive_jets());
+
+    // sanity checks.................
+    
+    if( fatJets.size() > 1 ) std::cout << "ERROR: " << fatJets.size() << " were clustered, but only 1 was expected. \n Only the first jet will be used." << std::endl;
+    
+    if( debug ){
+      
+      std::cout << "std Jet collection: " << iJet->pt() << std::endl;
+      
+      std::cout << "hand clustered jet: " << std::endl;
+      for ( unsigned int k = 0 ; k < fatJets.size() ; k++){
+	std::cout << "pt: " << fatJets[ k ].pt() << std::endl;
+      }
+    }
+    if( debug ) 
+      std::cout << "-----------------------" << std::endl;
+    // ..............................
+    
+    
+    // update sumJetMass and nSubJets for event
+    if( fatJets.size() > 0 ) {
+      
+      *sumJetMass += fatJets[ 0 ].m();
+      *nSubJets   += subjetCounter_pt50.result( fatJets[ 0 ] );
+      
+    }
+
+  }// end loop over jets
+  
   iEvent.put(sumJetMass, jetCollection+"sumJetMass" );
   iEvent.put(nSubJets,   jetCollection+"nSubJets"   );
 

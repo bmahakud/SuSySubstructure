@@ -24,32 +24,37 @@ process.AllHadronicFilter = cms.EDFilter("AllHadronicGenFilter")
 # CLUSTER GEN PARTICLES
 
 from RecoJets.JetProducers.GenJetParameters_cfi import *
+from RecoJets.JetProducers.ak5GenJets_cfi import *
 from RecoJets.JetProducers.AnomalousCellParameters_cfi import *
 
-GenJetParameters.src = cms.InputTag("genParticlesForJetsNoNu")
+process.ak1p2GenJets = ak5GenJets.clone(
+    src = cms.string("genParticlesForJetsNoNu"),
+    rParam = cms.double(1.2)
+)
 
-process.ak1p2GenJets = cms.EDProducer("FastjetJetProducer",
-                                      GenJetParameters,
-                                      AnomalousCellParameters, 
-                                      jetAlgorithm = cms.string("AntiKt"),
-                                      rParam       = cms.double(1.2),
-                                      useTrimming = cms.bool(False),
-                                      rFilt = cms.double(0.2),
-                                      trimPtFracMin = cms.double(0.05),
-                                      useExplicitGhosts = cms.bool(False)
-                                      )
+#process.ak1p2GenJets = cms.EDProducer("FastjetJetProducer",
+#                                      GenJetParameters,
+#                                      AnomalousCellParameters, 
+#                                      jetAlgorithm = cms.string("AntiKt"),
+#                                      rParam       = cms.double(1.2),
+#                                      useTrimming = cms.bool(False),
+#                                      rFilt = cms.double(0.2),
+#                                      trimPtFracMin = cms.double(0.05),
+#                                      useExplicitGhosts = cms.bool(False)
+#                                      )
 
 # Calculate Substructure Variables and put into event
 process.Substructure = cms.EDProducer("Substructure",
                                       jetCollection = cms.untracked.string("ak1p2GenJets"),
                                       PFCandCollection = cms.untracked.string("genParticlesForJetsNoNu"),
-                                      clusterRadius = cms.untracked.double(1.2)
+                                      clusterRadius = cms.untracked.double(1.2),
+                                      debug = cms.untracked.bool(False)
                                       )
 
 ##  EVENTS TO PROCESS
 
 #process.skipEvents = cms.untracked.PSet( input = cms.untracked.uint32(5000) )
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 ##  LOAD DATAFILES
 #process.load("AWhitbeck.SuSySubstructure.testSample_cff")
