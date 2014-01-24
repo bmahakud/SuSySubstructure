@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    GenJetTreeFiller
-// Class:      GenJetTreeFiller
+// Package:    AnalysisTreeFiller
+// Class:      AnalysisTreeFiller
 // 
-/**\class GenJetTreeFiller GenJetTreeFiller.cc
+/**\class AnalysisTreeFiller AnalysisTreeFiller.cc
 
  Description: [one line class summary]
 
@@ -53,11 +53,11 @@
 #include <vector>
 
 
-class GenJetTreeFiller : public edm::EDAnalyzer {
+class AnalysisTreeFiller : public edm::EDAnalyzer {
 
 public:
-  explicit GenJetTreeFiller(const edm::ParameterSet&);
-  ~GenJetTreeFiller();
+  explicit AnalysisTreeFiller(const edm::ParameterSet&);
+  ~AnalysisTreeFiller();
   
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
   
@@ -74,7 +74,7 @@ private:
   
   // ----------member data ---------------------------
 
-  TTree* GenJetTree;
+  TTree* AnalysisTree;
 
   struct treeStructure {
 
@@ -112,37 +112,37 @@ private:
 };
 
 
-GenJetTreeFiller::GenJetTreeFiller(const edm::ParameterSet& iConfig):
-  stdJetCollection(iConfig.getUntrackedParameter<std::string>("stdJetCollection","ak5GenJets")),
-  fatJetCollection(iConfig.getUntrackedParameter<std::string>("fatJetCollection","ak1p2GenJets")),
+AnalysisTreeFiller::AnalysisTreeFiller(const edm::ParameterSet& iConfig):
+  stdJetCollection(iConfig.getUntrackedParameter<std::string>("stdJetCollection","ak5PFJets")),
+  fatJetCollection(iConfig.getUntrackedParameter<std::string>("fatJetCollection","ak1p2PFJets")),
   debug(iConfig.getUntrackedParameter<bool>("debug",false))
 {
 
   //now do what ever initialization is needed
   edm::Service<TFileService> fs;
 
-  GenJetTree = fs->make<TTree>("GenJetTree","GenJetTree");
+  AnalysisTree = fs->make<TTree>("AnalysisTree","AnalysisTree");
 
-  GenJetTree->Branch("jetPt_min30",&myTree.jetPt_min30);
-  GenJetTree->Branch("jetPt_min50",&myTree.jetPt_min50);
-  GenJetTree->Branch("jetMass_pt30",&myTree.jetMass_pt30);
-  GenJetTree->Branch("jetMass_pt50",&myTree.jetMass_pt50);
-  GenJetTree->Branch("sumJetMass_pt30",&myTree.sumJetMass_pt30,"sumJetMass_pt30/D");
-  GenJetTree->Branch("sumJetMass_pt50",&myTree.sumJetMass_pt50,"sumJetMass_pt50/D");
-  GenJetTree->Branch("nSubJets_pt30",&myTree.nSubJets_pt30,"nSubJets_pt30/I");
-  GenJetTree->Branch("nSubJets_pt50",&myTree.nSubJets_pt50,"nSubJets_pt50/I");
-  GenJetTree->Branch("Ht_pt30",&myTree.Ht_pt30,"Ht_pt30/D");
-  GenJetTree->Branch("Ht_pt50",&myTree.Ht_pt50,"Ht_pt50/D");
-  GenJetTree->Branch("met_pt30",&myTree.met_pt30,"met_pt30/D");
-  GenJetTree->Branch("met_pt50",&myTree.met_pt50,"met_pt50/D");
-  GenJetTree->Branch("nJets_pt30",&myTree.nJets_pt30,"nJets_pt30/I");
-  GenJetTree->Branch("nJets_pt50",&myTree.nJets_pt50,"nJets_pt50/I");
-  GenJetTree->Branch("eventWeight",&myTree.eventWeight,"eventWeight/D");
+  AnalysisTree->Branch("jetPt_min30",&myTree.jetPt_min30);
+  AnalysisTree->Branch("jetPt_min50",&myTree.jetPt_min50);
+  AnalysisTree->Branch("jetMass_pt30",&myTree.jetMass_pt30);
+  AnalysisTree->Branch("jetMass_pt50",&myTree.jetMass_pt50);
+  AnalysisTree->Branch("sumJetMass_pt30",&myTree.sumJetMass_pt30,"sumJetMass_pt30/D");
+  AnalysisTree->Branch("sumJetMass_pt50",&myTree.sumJetMass_pt50,"sumJetMass_pt50/D");
+  AnalysisTree->Branch("nSubJets_pt30",&myTree.nSubJets_pt30,"nSubJets_pt30/I");
+  AnalysisTree->Branch("nSubJets_pt50",&myTree.nSubJets_pt50,"nSubJets_pt50/I");
+  AnalysisTree->Branch("Ht_pt30",&myTree.Ht_pt30,"Ht_pt30/D");
+  AnalysisTree->Branch("Ht_pt50",&myTree.Ht_pt50,"Ht_pt50/D");
+  AnalysisTree->Branch("met_pt30",&myTree.met_pt30,"met_pt30/D");
+  AnalysisTree->Branch("met_pt50",&myTree.met_pt50,"met_pt50/D");
+  AnalysisTree->Branch("nJets_pt30",&myTree.nJets_pt30,"nJets_pt30/I");
+  AnalysisTree->Branch("nJets_pt50",&myTree.nJets_pt50,"nJets_pt50/I");
+  AnalysisTree->Branch("eventWeight",&myTree.eventWeight,"eventWeight/D");
 
 }
 
 
-GenJetTreeFiller::~GenJetTreeFiller()
+AnalysisTreeFiller::~AnalysisTreeFiller()
 {
  
    // do anything here that needs to be done at desctruction time
@@ -157,7 +157,7 @@ GenJetTreeFiller::~GenJetTreeFiller()
 
 // ------------ method called for each event  ------------
 void
-GenJetTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
 
   // fill histograms for di-lepton system
@@ -181,10 +181,10 @@ GenJetTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   myTree.eventWeight = eventWeight;
   // ---------------------------
 
-  Handle< View<reco::GenJet> > jetCands;
+  Handle< View<reco::Jet> > jetCands;
   iEvent.getByLabel(stdJetCollection,jetCands);
 
-  Handle< View<reco::GenJet> > fatJetCands;
+  Handle< View<reco::Jet> > fatJetCands;
   iEvent.getByLabel(fatJetCollection,fatJetCands);
 
   myTree.jetPt_min30.clear();
@@ -211,7 +211,7 @@ GenJetTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   double negativePx_pt50 = 0.; 
   double negativePy_pt50 = 0.; 
 
-  for(View<reco::GenJet>::const_iterator iJet = jetCands->begin();
+  for(View<reco::Jet>::const_iterator iJet = jetCands->begin();
       iJet != jetCands->end();
       ++iJet){
 
@@ -257,19 +257,19 @@ GenJetTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   // grab substructure variables from the event
   // ..........................................
   Handle< double > sumJetMass;
-  iEvent.getByLabel("SubstructureGenJets","ak1p2GenJets-sumJetMass",sumJetMass);
+  iEvent.getByLabel("Substructure","ak1p2Jets-sumJetMass",sumJetMass);
 
   myTree.sumJetMass_pt30 = *sumJetMass;
   myTree.sumJetMass_pt50 = *sumJetMass;
 
   Handle< double > nSubJets;
-  iEvent.getByLabel("SubstructureGenJets","ak1p2GenJets-nSubJets",nSubJets);
+  iEvent.getByLabel("Substructure","ak1p2Jets-nSubJets",nSubJets);
 
   myTree.nSubJets_pt30 = *nSubJets;
   myTree.nSubJets_pt50 = *nSubJets;
   // ..........................................
 
-  GenJetTree->Fill();    
+  AnalysisTree->Fill();    
 
 }
 
@@ -277,43 +277,43 @@ GenJetTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
 // ------------ method called once each job just before starting event loop  ------------
 void 
 
-GenJetTreeFiller::beginJob()
+AnalysisTreeFiller::beginJob()
 {
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
 void 
-GenJetTreeFiller::endJob() 
+AnalysisTreeFiller::endJob() 
 {
 }
 
 // ------------ method called when starting to processes a run  ------------
 void 
-GenJetTreeFiller::beginRun(edm::Run const&, edm::EventSetup const&)
+AnalysisTreeFiller::beginRun(edm::Run const&, edm::EventSetup const&)
 {
 }
 
 // ------------ method called when ending the processing of a run  ------------
 void 
-GenJetTreeFiller::endRun(edm::Run const&, edm::EventSetup const&)
+AnalysisTreeFiller::endRun(edm::Run const&, edm::EventSetup const&)
 {
 }
 
 // ------------ method called when starting to processes a luminosity block  ------------
 void 
-GenJetTreeFiller::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+AnalysisTreeFiller::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
 {
 }
 
 // ------------ method called when ending the processing of a luminosity block  ------------
 void 
-GenJetTreeFiller::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+AnalysisTreeFiller::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
 {
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
-GenJetTreeFiller::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+AnalysisTreeFiller::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
 
   edm::ParameterSetDescription desc;
   desc.setUnknown();
@@ -322,4 +322,4 @@ GenJetTreeFiller::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
 }
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(GenJetTreeFiller);
+DEFINE_FWK_MODULE(AnalysisTreeFiller);

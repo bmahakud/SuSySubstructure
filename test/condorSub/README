@@ -1,0 +1,8 @@
+#to submit jobs:
+condor_submit condor_submit
+
+#to check queue
+condor_q
+
+#to kill
+condor_rm <jobID>

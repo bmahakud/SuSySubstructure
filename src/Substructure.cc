@@ -46,6 +46,7 @@
 #include <fastjet/ClusterSequence.hh>
 #include <fastjet/PseudoJet.hh>
 #include <fastjet/JetDefinition.hh>
+#include <fastjet/tools/Filter.hh>
 
 #include "SubjetCounting.hh"
 
@@ -78,20 +79,22 @@ private:
   // --------------- members ---------------------
   
   std::string jetCollection;    // name of jet collection
-  std::string PFCandCollection; // name of PFCand collection
   double      clusterRadius;    // jet clustering radius
+  double      trimPtFracMin;   // %pt for trimming
+  bool        trimJets;         // apply trimming
   bool        debug;
 };
 
 
 Substructure::Substructure(const edm::ParameterSet& iConfig):
   jetCollection(iConfig.getUntrackedParameter<std::string>("jetCollection","ak1p2GenJets")),
-  PFCandCollection(iConfig.getUntrackedParameter<std::string>("PFCandCollection","genParticlesForJetsNoNu")),
   clusterRadius(iConfig.getUntrackedParameter<double>("clusterRadius",1.2)),
+  trimPtFracMin(iConfig.getUntrackedParameter<double>("trimPtFracMin",0.05)),
+  trimJets(iConfig.getUntrackedParameter<bool>("trimJets",true)),
   debug(iConfig.getUntrackedParameter<bool>("debug",true))
 {
-  produces<double>(jetCollection+"nSubJets");
-  produces<double>(jetCollection+"sumJetMass");
+  produces<double>(jetCollection+"-nSubJets");
+  produces<double>(jetCollection+"-sumJetMass");
 }
 
 
@@ -117,17 +120,14 @@ Substructure::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   using namespace edm;
 
-  Handle< View<reco::GenJet> > jetCands;
+  Handle< View<reco::PFJet> > jetCands;
   iEvent.getByLabel(jetCollection,jetCands);
-
-  Handle< View<reco::GenParticle> > PFCands;
-  iEvent.getByLabel(PFCandCollection,PFCands);
 
   // initialize object for counting subjets
   //               SubjetCountingCA(mass_cutoff,ycut,R_min,pt_cut);    
   std::vector<fastjet::PseudoJet> fatJets;
   std::vector<fastjet::PseudoJet> constituents;      
-  
+
   fastjet::JetDefinition aktp12(fastjet::antikt_algorithm, clusterRadius);
   
   fastjet::contrib::SubjetCountingCA subjetCounter_pt50(50.,0.15,0.15,50.);
@@ -144,14 +144,15 @@ Substructure::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   // loop over all jets to recluster and recover clutser sequence
   // NOTE: this might not produce the EXACT sequence from the original
   // clustering, but it should be close (might ask experts)
-  for(View<reco::GenJet>::const_iterator iJet = jetCands->begin();
+  for(View<reco::PFJet>::const_iterator iJet = jetCands->begin();
       iJet != jetCands->end();
       ++iJet){
       
+    if ( iJet->pt() < 50. ) continue;
+
     if ( debug ) {
 
-      if( iJet->pt() > 20. )
-	std::cout << "std jet pt: " << iJet->pt() << std::endl;
+      std::cout << "std jet pt: " << iJet->pt() << std::endl;
 
     }// end debug
 
@@ -185,7 +186,8 @@ Substructure::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     // sanity checks.................
     
-    if( fatJets.size() > 1 ) std::cout << "ERROR: " << fatJets.size() << " were clustered, but only 1 was expected. \n Only the first jet will be used." << std::endl;
+    if( debug && fatJets.size() > 1 ) std::cout << "ERROR: " << fatJets.size() << " were clustered, but only 1 was expected. \n Only the first jet will be used." << std::endl;
+    
     
     if( debug ){
       
@@ -199,20 +201,25 @@ Substructure::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
     if( debug ) 
       std::cout << "-----------------------" << std::endl;
     // ..............................
-    
-    
+
     // update sumJetMass and nSubJets for event
-    if( fatJets.size() > 0 ) {
-      
-      *sumJetMass += fatJets[ 0 ].m();
+    if( fatJets.size() > 0 )
       *nSubJets   += subjetCounter_pt50.result( fatJets[ 0 ] );
-      
-    }
+
+    // trim jets
+    fastjet::Filter trimmer( aktp12 , fastjet::SelectorPtFractionMin( trimPtFracMin ) );
+    if( fatJets.size() > 0 )
+      *sumJetMass += trimmer( fatJets[ 0 ] ).m() ;
+
 
   }// end loop over jets
+
+  if( debug )
+    std::cout << "------sumjet mass: " << *sumJetMass << "-----------------" << std::endl;
+
   
-  iEvent.put(sumJetMass, jetCollection+"sumJetMass" );
-  iEvent.put(nSubJets,   jetCollection+"nSubJets"   );
+  iEvent.put(sumJetMass, jetCollection+"-sumJetMass" );
+  iEvent.put(nSubJets,   jetCollection+"-nSubJets"   );
 
 }
 
