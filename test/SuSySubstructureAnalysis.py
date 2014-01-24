@@ -69,7 +69,7 @@ process.genParticlesForJetsNoNu.src = cms.InputTag("genParticles")
 
 ######################
 
-process.ak1p2GenJets = ak5GenJets.clone(src = cms.InputTag("genParticles"),
+process.ak1p2GenJets = ak5GenJets.clone(src = cms.InputTag("genParticlesForJetsNoNu"),
                                         rParam = cms.double(1.2),
                                         useTrimming = cms.bool(True),
                                         rFilt = cms.double(0.2),
