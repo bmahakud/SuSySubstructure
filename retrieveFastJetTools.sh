@@ -17,7 +17,7 @@ if [ -a "${DIR_NAME}.tar.gz" ]
 	then 
 	cp $DIR_NAME/SubjetCounting/*.cc src/.
 	cp $DIR_NAME/SubjetCounting/*.hh src/.
-	cp $DIR_NAME/SubjetCounting/example.cc src/SubjetCounting_example.cc
+	cp $DIR_NAME/SubjetCounting/example.cc src/SubjetCounting_example.cc_
     else
 	echo "ERROR: 3rd party tool, SubjetCounting doesn't seem to exist"
     fi
@@ -26,7 +26,7 @@ if [ -a "${DIR_NAME}.tar.gz" ]
 	then 
 	cp $DIR_NAME/Nsubjettiness/*.cc src/.
 	cp $DIR_NAME/Nsubjettiness/*.hh src/.
-	cp $DIR_NAME/Nsubjettiness/example.cc src/Nsubjetiness_example.cc
+	cp $DIR_NAME/Nsubjettiness/example.cc src/Nsubjetiness_example.cc_
     else
 	echo "ERROR: 3rd party tool, Nsubjettiness doesn't seem to exist"
     fi
