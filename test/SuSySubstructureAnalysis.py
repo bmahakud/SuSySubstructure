@@ -54,6 +54,21 @@ from RecoJets.JetProducers.ak5PFJets_cfi import *
 from RecoJets.JetProducers.AnomalousCellParameters_cfi import *
 
 
+#####################
+# CLEAN GEN PARTICLES
+#####################
+
+process.minPtGenParticles = cms.EDFilter("PtMinCandViewSelector",
+                                  src = cms.InputTag("genParticles"),
+                                  ptMin = cms.double(0.001)
+                                  )
+
+process.load("RecoJets.Configuration.GenJetParticles_cff")
+#genParticlesForJetsNoNu gets loaded above ---
+process.genParticlesForJetsNoNu.src = cms.InputTag("genParticles")
+
+######################
+
 process.ak1p2GenJets = ak5GenJets.clone(src = cms.InputTag("genParticles"),
                                         rParam = cms.double(1.2),
                                         useTrimming = cms.bool(True),
@@ -131,6 +146,8 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.numE
 process.bulkPath = cms.Path(process.ak1p2Jets
                             *process.Substructure
                             *process.TreeFiller
+                            #*process.minPtGenParticles
+                            *process.genParticlesForJetsNoNu
                             *process.ak1p2GenJets
                             *process.SubstructureGenJets
                             *process.GenTreeFiller
