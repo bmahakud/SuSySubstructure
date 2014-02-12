@@ -32,8 +32,8 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
-#include "TH1.h"
-#include "TH2.h"
+#include "TH1F.h"
+#include "TH2F.h"
 #include "TLorentzVector.h"
 #include "TTree.h"
 
@@ -75,6 +75,14 @@ private:
   // ----------member data ---------------------------
 
   TTree* GenJetTree;
+
+  TH1F*  Ht_histo;
+  TH1F*  met_histo;
+  TH1F*  sumJetMass_histo;
+
+  TH2F*  Ht_vs_met_histo;
+  TH2F*  Ht_vs_sumJetMass_histo;
+  TH2F*  sumJetMass_vs_met_histo;
 
   struct treeStructure {
 
@@ -122,6 +130,14 @@ GenJetTreeFiller::GenJetTreeFiller(const edm::ParameterSet& iConfig):
   edm::Service<TFileService> fs;
 
   GenJetTree = fs->make<TTree>("GenJetTree","GenJetTree");
+
+  Ht_histo                = fs->make<TH1F >("Ht_histo","H_{T} [GeV]",400,0,2000);
+  met_histo               = fs->make<TH1F >("met_histo","missing H_{T} [GeV]",400,0,2000);
+  sumJetMass_histo        = fs->make<TH1F >("sumJetMass_histo","#Sigma m_{j} [GeV]",400,0,2000);
+
+  Ht_vs_met_histo         = fs->make<TH2F >("Ht_vs_met_histo",";H_{T} [GeV];missing H_{T} [GeV]",400,0,2000,400,0,2000);
+  Ht_vs_sumJetMass_histo  = fs->make<TH2F >("Ht_vs_sumJetMass_histo",";H_{T} [GeV];#Sigma m_{j} [GeV]",400,0,2000,400,0,2000);
+  sumJetMass_vs_met_histo = fs->make<TH2F >("sumJetMass_vs_met_histo",";#Sigma m_{j} [GeV];missing H_{T} [GeV]",400,0,2000,400,0,2000);
 
   GenJetTree->Branch("jetPt_min30",&myTree.jetPt_min30);
   GenJetTree->Branch("jetPt_min50",&myTree.jetPt_min50);
@@ -270,6 +286,14 @@ GenJetTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetu
   // ..........................................
 
   GenJetTree->Fill();    
+
+  Ht_histo->Fill( myTree.Ht_pt50 );
+  met_histo->Fill( myTree.met_pt30 );
+  sumJetMass_histo->Fill( myTree.sumJetMass_pt50 );
+
+  Ht_vs_met_histo->Fill( myTree.Ht_pt50, myTree.met_pt30 );
+  Ht_vs_sumJetMass_histo->Fill( myTree.Ht_pt50, myTree.sumJetMass_pt50 );
+  sumJetMass_vs_met_histo->Fill( myTree.sumJetMass_pt50, myTree.met_pt30 );
 
 }
 

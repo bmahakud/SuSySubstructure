@@ -15,6 +15,9 @@ process.options   = cms.untracked.PSet(
     wantSummary = cms.untracked.bool(True)
     )
 
+process.load('Configuration/StandardSequences/FrontierConditions_GlobalTag_cff')
+process.GlobalTag.globaltag = "START53_V11::All"
+
 ##################################
 # DEFINE MODULES FOR ANALYSIS
 ##################################
@@ -24,27 +27,44 @@ process.AllHadronicFilter = cms.EDFilter("AllHadronicGenFilter")
 
 # Find events with at least one selected PAT muon/electron for vetoing
 
-process.minPtMuons = cms.EDFilter("PtMinCandViewSelector",
-                                  src = cms.InputTag("selectedPatMuonsPF"),
-                                  ptMin = cms.double(10)
-                                  )
-
+process.reasonableMuons = cms.EDFilter("CandViewSelector",
+                                     src = cms.InputTag("selectedPatMuonsPF"),
+                                     cut = cms.string("eta<2.5 && eta>-2.5 && pt>10.")
+                                     )
 
 process.MuonFinder = cms.EDFilter("CandViewCountFilter",
-                                  src = cms.InputTag("minPtMuons"),
+                                  src = cms.InputTag("reasonableMuons"),
                                   minNumber = cms.uint32(1)
                                   )
 
-process.minPtElectrons = cms.EDFilter("PtMinCandViewSelector",
-                                      src = cms.InputTag("selectedPatElectronsPF"),
-                                      ptMin = cms.double(10)
-                                      )
-
+process.reasonableElectrons = cms.EDFilter("CandViewSelector",
+                                         src = cms.InputTag("selectedPatElectronsPF"),
+                                         cut = cms.string("eta<2.5 && eta>-2.5 && pt>10.")
+                                         )
 
 process.ElectronFinder = cms.EDFilter("CandViewCountFilter",
-                                      src = cms.InputTag("minPtElectrons"),
+                                      src = cms.InputTag("reasonableElectrons"),
                                       minNumber = cms.uint32(1)
                                       )
+
+# RA2 Baseline selections
+
+process.RA2baseline = cms.EDFilter("RA2baselineSelection",
+                                   jetCollection = cms.untracked.string("patJetsAK5PFPt30"),
+                                   debug         = cms.untracked.bool(False)
+                                   )
+
+# official lepton filter
+
+process.load("AWhitbeck.SuSySubstructure.RA2Leptons_cff")
+
+#######################
+# RA2 Event Filtering
+#######################
+
+#from SandBox.Skims.RA2CleaningFilterResults_cfg import *
+#process.load("SandBox.Skims.RA2CleaningFilterResults_cfg")
+process.load("AWhitbeck.SuSySubstructure.RA2CleaningFilterResults_cfg")
 
 # CLUSTER PARTICLES
 
@@ -59,9 +79,9 @@ from RecoJets.JetProducers.AnomalousCellParameters_cfi import *
 #####################
 
 process.minPtGenParticles = cms.EDFilter("PtMinCandViewSelector",
-                                  src = cms.InputTag("genParticles"),
-                                  ptMin = cms.double(0.001)
-                                  )
+                                         src = cms.InputTag("genParticles"),
+                                         ptMin = cms.double(0.001)
+                                         )
 
 process.load("RecoJets.Configuration.GenJetParticles_cff")
 #genParticlesForJetsNoNu gets loaded above ---
@@ -85,6 +105,20 @@ process.ak1p2Jets = ak5PFJets.clone(src = cms.InputTag("pfNoPileUpIsoPF"),
                                     useExplicitGhosts = cms.bool(False)
                                     )
     
+
+# Produce subjet collection
+
+process.fatJetSubjets = cms.EDProducer("SubjetProducer",
+                                       jetCollection     = cms.untracked.string("ak1p2Jets"),
+                                       clusterRadius     = cms.untracked.double(1.2),
+                                       trimJets          = cms.untracked.bool(True),
+                                       trimPtFracMin     = cms.untracked.double(0.05),
+                                       subjetPtCut       = cms.untracked.double(30.),
+                                       subjetMassCut     = cms.untracked.double(30.),
+                                       subjetRcut        = cms.untracked.double(0.15),
+                                       subjetPtImbalance = cms.untracked.double(0.15),
+                                       debug             = cms.untracked.bool(False)
+                                       )
 # Calculate Substructure Variables and put into event
 process.SubstructureGenJets = cms.EDProducer("SubstructureGenJets",
                                              jetCollection = cms.untracked.string("ak1p2GenJets"),
@@ -105,15 +139,14 @@ process.Substructure = cms.EDProducer("Substructure",
 # FILLS TREES WITH THE RELEVANT VARIABLES FOR SUM JET MASS
 
 process.GenTreeFiller = cms.EDAnalyzer("GenJetTreeFiller",
-                                       stdJetCollection = cms.untracked.string("ak5GenJetsNoNu"),
-                                       fatJetCollection = cms.untracked.string("ak1p2GenJets"),
-                                       debug            = cms.untracked.bool(False)
+                                       jetCollection = cms.untracked.string("ak5GenJetsNoNu:ak1p2GenJets"),
+                                       debug         = cms.untracked.bool(False)
                                        )
 
 process.TreeFiller = cms.EDAnalyzer("AnalysisTreeFiller",
-                                    stdJetCollection = cms.untracked.string("patJetsAK5PF"),
-                                    fatJetCollection = cms.untracked.string("ak1p2Jets"),
-                                    debug            = cms.untracked.bool(False)
+                                    jetCollection = cms.untracked.string("patJetsAK5PFPt30:ak1p2Jets"),
+                                    pseudoParticleCollection = cms.untracked.string("fatJetSubjets"),
+                                    debug         = cms.untracked.bool(False)
                                     )
 
 #######################################                                                                                                      
@@ -135,7 +168,14 @@ process.TFileService = cms.Service("TFileService",
                                    )
 
 ##  LOAD DATAFILES
-process.load("AWhitbeck.SuSySubstructure."+options.inputFilesConfig+"_cff")
+if options.inputFilesConfig!="" :
+    process.load("AWhitbeck.SuSySubstructure."+options.inputFilesConfig+"_cff")
+
+if options.files!=[] :   
+    readFiles = cms.untracked.vstring()
+    readFiles.extend( options.files )
+    process.source = cms.Source("PoolSource",
+                                fileNames = readFiles )
 
 ##  EVENTS TO PROCESS
 process.skipEvents = cms.untracked.PSet( input = cms.untracked.uint32(options.skipEvents) )
@@ -143,48 +183,61 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.numE
 
 ##  DEFINE SCHEDULE
 
-process.bulkPath = cms.Path(process.ak1p2Jets
-                            *process.Substructure
-                            *process.TreeFiller
-                            #*process.minPtGenParticles
-                            *process.genParticlesForJetsNoNu
-                            *process.ak1p2GenJets
-                            *process.SubstructureGenJets
-                            *process.GenTreeFiller
-                            )
+process.bulkSequence = cms.Sequence(process.ak1p2Jets
+                                    *process.fatJetSubjets
+                                    *process.Substructure
+                                    *process.TreeFiller
+                                    #*process.minPtGenParticles
+                                    *process.genParticlesForJetsNoNu
+                                    *process.ak1p2GenJets
+                                    *process.SubstructureGenJets
+                                    *process.GenTreeFiller
+                                    )
 
 if( options.useGenJets ):
 
-    process.leptonFilterPath = cms.Path( process.AllHadronicFilter )
+    process.leptonFilterSequence = cms.Sequence( process.AllHadronicFilter )
 
 else:
 
-    process.leptonFilterPath = cms.Path(#process.minPtElectrons*~process.ElectronFinder
-                                        *process.minPtMuons*~process.MuonFinder
-                                        )
+    process.leptonFilterSequence = cms.Sequence(process.reasonableElectrons#*process.minPtElectrons
+                                                *~process.ElectronFinder
+                                                *process.reasonableMuons#*process.minPtMuons
+                                                *~process.MuonFinder
+                                                )
 
-process.susyFilterPath = cms.Path( process.smsModelFilter )
+process.susyFilterSequence = cms.Sequence( process.smsModelFilter )
 
 if( options.applySUSYfilter ):
 
-    process.schedule = cms.Schedule( process.susyFilterPath,
-                                     process.leptonFilterPath,
-                                     process.bulkPath
-                                     )
+    process.SuSySubstructureSequence = cms.Sequence( process.susyFilterSequence*
+                                                     process.ra2ElectronVeto*
+                                                     process.ra2PFMuonVeto*
+                                                     #process.leptonFilterSequence*
+                                                     #process.RA2baseline*
+                                                     #process.cleaningOnFilterResults*
+                                                     process.bulkSequence
+                                                     )
     
 else:
+    
+    process.SuSySubstructureSequence = cms.Sequence( process.ra2ElectronVeto*
+                                                     process.ra2PFMuonVeto*
+                                                     #process.leptonFilterSequence*
+                                                     #process.RA2baseline*
+                                                     #process.cleaningOnFilterResults*
+                                                     process.bulkSequence
+                                                     )
 
-    process.schedule = cms.Schedule( process.leptonFilterPath,
-                                     process.bulkPath
-                                     )
+process.path = cms.Path(process.SuSySubstructureSequence)
 
 #OUPUT CONFIGURATION
-#process.out = cms.OutputModule("PoolOutputModule",
-#                               fileName = cms.untracked.string('test.root'),
-#                               #save only events passing the full path
-#                               #SelectEvents = cms.untracked.PSet( SelectEvents = cms.vstring('p') ),
-#                               outputCommands = cms.untracked.vstring('keep *_*Jet*_*_*',
-#                                                                      'keep *_*Substructure*_*_*')
-#                               )
-#
-#process.outpath = cms.EndPath(process.out)
+process.out = cms.OutputModule("PoolOutputModule",
+                               fileName = cms.untracked.string('test.root'),
+                               #save only events passing the full path
+                               #SelectEvents = cms.untracked.PSet( SelectEvents = cms.vstring('p') ),
+                               outputCommands = cms.untracked.vstring('keep *_*Jet*_*_*',
+                                                                      'keep *_*Substructure*_*_*')
+                               )
+
+process.outpath = cms.EndPath(process.out)

@@ -4,10 +4,9 @@
 <use name="DataFormats/ParticleFlowCandidate"/>
 <use name="DataFormats/ParticleFlowReco"/>
 <use name="DataFormats/PatCandidates"/>
+<use name="DataFormats/JetReco"/>
 <use name="fastjet"/>
 <use name="ktjet"/>
-<flags EDM_PLUGIN="1"/>
 <use name="CommonTools/UtilAlgos"/>
-<export>
-   <lib name="1"/>
-</export>
+<flags EDM_PLUGIN="1"/>
+	

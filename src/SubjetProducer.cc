@@ -1,23 +1,20 @@
 // -*- C++ -*-
 //
 // Package:    SuSySubstructure
-// Class:      SuSySubstructure
+// Class:      SubjetProducer
 // 
-/**\class Substructure Substructure.cc
+/*
 
- Description: Takes as cfg input a jet collection and
- a collection of PFCandidates.  PFCandidates within 
- each jet radius are reclustered for calculating 
- substructure variables. 
+ Description: Takes as cfg input a jet collection 
+ and a collection of PFCandidates.  PFCandidates 
+ are clustered each jet radius are reclustered for 
+ calculating subjets according to arxiv::?????
 
 */
 //
 // Original Author:  Andrew Whitbeck
-//         Created:  Wed Dec 5, 2013
-// $Id$
-//
-//
-
+//         Created:  Wed Feb 10, 2014
+// 
 
 // system include files
 #include <memory>
@@ -33,14 +30,14 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
+#include "AWhitbeck/SuSySubstructure/interface/SubjetProducer.h"
+
 #include "TH1.h"
 #include "TH2.h"
 #include "TLorentzVector.h"
 #include "TTree.h"
 
-#include <DataFormats/PatCandidates/interface/Jet.h>
-#include <DataFormats/PatCandidates/interface/Muon.h>
-#include <DataFormats/PatCandidates/interface/CompositeCandidate.h>
+#include <DataFormats/JetReco/interface/Jet.h>
 #include <DataFormats/ParticleFlowCandidate/interface/PFCandidate.h>
 
 #include <fastjet/ClusterSequence.hh>
@@ -52,53 +49,23 @@
 
 #include <vector>
 
-
-class Substructure : public edm::EDProducer {
-
-public:
-  explicit Substructure(const edm::ParameterSet&);
-  ~Substructure();
-  
-  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
-  
-  
-private:
-  virtual void beginJob() ;
-  virtual void produce(edm::Event&, const edm::EventSetup&);
-  virtual void endJob() ;
-  
-  virtual void beginRun(edm::Run const&, edm::EventSetup const&);
-  virtual void endRun(edm::Run const&, edm::EventSetup const&);
-  virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
-  virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
-  
-  // ----------member data ---------------------------
-
-
-  // ---------- configurable data ----------------
-  // --------------- members ---------------------
-  
-  std::string jetCollection;    // name of jet collection
-  double      clusterRadius;    // jet clustering radius
-  double      trimPtFracMin;   // %pt for trimming
-  bool        trimJets;         // apply trimming
-  bool        debug;
-};
-
-
-Substructure::Substructure(const edm::ParameterSet& iConfig):
+SubjetProducer::SubjetProducer(const edm::ParameterSet& iConfig):
   jetCollection(iConfig.getUntrackedParameter<std::string>("jetCollection","ak1p2GenJets")),
   clusterRadius(iConfig.getUntrackedParameter<double>("clusterRadius",1.2)),
   trimPtFracMin(iConfig.getUntrackedParameter<double>("trimPtFracMin",0.05)),
   trimJets(iConfig.getUntrackedParameter<bool>("trimJets",true)),
+  subjetPtCut(iConfig.getUntrackedParameter<double>("subjetPtCut",30.)),
+  subjetMassCut(iConfig.getUntrackedParameter<double>("subjetMassCut",30.)),
+  subjetRcut(iConfig.getUntrackedParameter<double>("subjetRcut",0.15)),
+  subjetPtImbalance(iConfig.getUntrackedParameter<double>("subjetPtImbalance",.15)),
   debug(iConfig.getUntrackedParameter<bool>("debug",true))
 {
-  produces<double>(jetCollection+"-nSubJets");
-  produces<double>(jetCollection+"-sumJetMass");
+  //produces< std::vector< reco::Jet > >(jetCollection+"-Subjets");
+  produces< std::vector< math::XYZTLorentzVector > >(jetCollection+"-Subjets"); 
 }
 
 
-Substructure::~Substructure()
+SubjetProducer::~SubjetProducer()
 {
  
    // do anything here that needs to be done at desctruction time
@@ -113,40 +80,36 @@ Substructure::~Substructure()
 
 // ------------ method called for each event  ------------
 void
-Substructure::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
+SubjetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
 
   // fill histograms for di-lepton system
 
   using namespace edm;
 
-  Handle< View<reco::PFJet> > jetCands;
+  // get jet collection
+  Handle< View<reco::Jet> > jetCands;
   iEvent.getByLabel(jetCollection,jetCands);
 
-  // initialize object for counting subjets
-  //               SubjetCountingCA(mass_cutoff,ycut,R_min,pt_cut);    
+  // initialize objects needed for fastjet 
+  // -------------------------------------
   std::vector<fastjet::PseudoJet> fatJets;
   std::vector<fastjet::PseudoJet> constituents;      
-
   fastjet::JetDefinition aktp12(fastjet::antikt_algorithm, clusterRadius);
-  
-  fastjet::contrib::SubjetCountingCA subjetCounter_pt50(30.,0.10,0.15,30.);
-  // --------------------------------------------------------------
+  // initialize object for counting subjets
+  fastjet::contrib::SubjetCountingCA subjetCounter_pt50(subjetMassCut,subjetPtImbalance,subjetMassCut,subjetPtCut);
+  // -------------------------------------
 
-  std::auto_ptr<double> sumJetMass ( new double(0.0) );
-  std::auto_ptr<double> nSubJets   ( new double(0.0) );
+  // syntax is probably not right!!!!
+  //std::auto_ptr< std::vector< reco::Jet > > Subjets ( new std::vector< reco::Jet > () );
+  std::auto_ptr< std::vector< math::XYZTLorentzVector > > Subjets ( new std::vector< math::XYZTLorentzVector > () );
 
   if( debug ){
     std::cout << "new events" << std::endl;
     std::cout << "===================" << std::endl;
   }
 
-  // loop over all jets to recluster and recover clutser sequence
-  // NOTE: this might not produce the EXACT sequence from the original
-  // clustering, but it should be close (might ask experts)
-  for(View<reco::PFJet>::const_iterator iJet = jetCands->begin();
-      iJet != jetCands->end();
-      ++iJet){
+  for(View<reco::Jet>::const_iterator iJet = jetCands->begin(); iJet != jetCands->end(); ++iJet){
       
     if ( iJet->pt() < 50. ) continue;
 
@@ -160,9 +123,8 @@ Substructure::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
     constituents.clear();      
     std::vector< const reco::Candidate * > jetConst = iJet->getJetConstituentsQuick();
     // loop over jet constituents for iJet
-    for ( unsigned int  iJetConst = 0 ; 
-	  iJetConst < jetConst.size() ;
-	  iJetConst++ ){
+    // for each jet constituent, add to vector< pseudojet > for reclustering
+    for ( unsigned int  iJetConst = 0 ; iJetConst < jetConst.size() ; iJetConst++ ){
 
       // get pseudojets to cluster
       constituents.push_back( fastjet::PseudoJet( jetConst[ iJetConst ]->px(), 
@@ -171,11 +133,11 @@ Substructure::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 						  jetConst[ iJetConst ]->energy() ) );
 
       if( debug ) {
-	std::cout << "jet const. p_{mu}: " 
-		  << jetConst[ iJetConst ]->px() << " " 
-		  << jetConst[ iJetConst ]->py() << " " 
-		  << jetConst[ iJetConst ]->pz() << " " 
-		  << jetConst[ iJetConst ]->energy() << std::endl;
+	       std::cout << "jet const. p_{mu}: " 
+		      << jetConst[ iJetConst ]->px() << " " 
+		      << jetConst[ iJetConst ]->py() << " " 
+		      << jetConst[ iJetConst ]->pz() << " " 
+		      << jetConst[ iJetConst ]->energy() << std::endl;
       }// end debug
       
     }// end loop over ith jet's constituents
@@ -185,7 +147,6 @@ Substructure::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
     fatJets = sorted_by_pt(cs_aktp12.inclusive_jets());
 
     // sanity checks.................
-    
     if( debug && fatJets.size() > 1 ) std::cout << "ERROR: " << fatJets.size() << " were clustered, but only 1 was expected. \n Only the first jet will be used." << std::endl;
     
     
@@ -195,33 +156,36 @@ Substructure::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
       
       std::cout << "hand clustered jet: " << std::endl;
       for ( unsigned int k = 0 ; k < fatJets.size() ; k++){
-	std::cout << "pt: " << fatJets[ k ].pt() << std::endl;
+	      std::cout << "pt: " << fatJets[ k ].pt() << std::endl;
       }
-    }
-    if( debug ) 
       std::cout << "-----------------------" << std::endl;
+    }
     // ..............................
 
     // trim jets
     fastjet::Filter trimmer( aktp12 , fastjet::SelectorPtFractionMin( trimPtFracMin ) );
 
-    // update sumJetMass and nSubJets for event
-    if( fatJets.size() > 0 ){
-      *nSubJets   += subjetCounter_pt50.result( fatJets[ 0 ] );
-      if( trimJets )
-        *sumJetMass += trimmer( fatJets[ 0 ] ).m() ;
-      else
-        *sumJetMass += fatJets[ 0 ].m() ;
+    // decluster jets into subjets
+    std::vector<fastjet::PseudoJet> pseudoSubjets ; 
+    if( trimJets )
+      pseudoSubjets = subjetCounter_pt50.getSubjets( trimmer( fatJets[ 0 ] ) ) ; 
+    else
+      pseudoSubjets = subjetCounter_pt50.getSubjets( fatJets[ 0 ] ) ;
+
+    for( unsigned int iSubjet = 0 ; iSubjet < pseudoSubjets.size() ; iSubjet++ ){
+
+      math::XYZTLorentzVector p4( pseudoSubjets[iSubjet].px(), 
+                                  pseudoSubjets[iSubjet].py(), 
+                                  pseudoSubjets[iSubjet].pz(), 
+                                  pseudoSubjets[iSubjet].e() ) ;
+
+      Subjets->push_back( p4 ) ; 
+
     }
 
   }// end loop over jets
 
-  if( debug )
-    std::cout << "------sumjet mass: " << *sumJetMass << "-----------------" << std::endl;
-
-  
-  iEvent.put(sumJetMass, jetCollection+"-sumJetMass" );
-  iEvent.put(nSubJets,   jetCollection+"-nSubJets"   );
+  iEvent.put(Subjets,   jetCollection+"-Subjets"   );
 
 }
 
@@ -229,43 +193,43 @@ Substructure::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 // ------------ method called once each job just before starting event loop  ------------
 void 
 
-Substructure::beginJob()
+SubjetProducer::beginJob()
 {
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
 void 
-Substructure::endJob() 
+SubjetProducer::endJob() 
 {
 }
 
 // ------------ method called when starting to processes a run  ------------
 void 
-Substructure::beginRun(edm::Run const&, edm::EventSetup const&)
+SubjetProducer::beginRun(edm::Run const&, edm::EventSetup const&)
 {
 }
 
 // ------------ method called when ending the processing of a run  ------------
 void 
-Substructure::endRun(edm::Run const&, edm::EventSetup const&)
+SubjetProducer::endRun(edm::Run const&, edm::EventSetup const&)
 {
 }
 
 // ------------ method called when starting to processes a luminosity block  ------------
 void 
-Substructure::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+SubjetProducer::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
 {
 }
 
 // ------------ method called when ending the processing of a luminosity block  ------------
 void 
-Substructure::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+SubjetProducer::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
 {
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
-Substructure::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+SubjetProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
 
   edm::ParameterSetDescription desc;
   desc.setUnknown();
@@ -274,4 +238,4 @@ Substructure::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
 }
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(Substructure);
+DEFINE_FWK_MODULE(SubjetProducer);

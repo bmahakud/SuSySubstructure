@@ -8,7 +8,7 @@ options = VarParsing.VarParsing ('standard')
 
 # register options
 options.register ('inputFilesConfig',
-                  "T1ttttSample", # default value
+                  "", # default value
                   VarParsing.VarParsing.multiplicity.singleton, # singleton or list
                   VarParsing.VarParsing.varType.string,          # string, int, or float
                   "config file for inputs, automatically appended with _cff.py")
@@ -44,7 +44,7 @@ options.register ('applySUSYfilter',
                   "if true filter is used to select a specific signal from gen-level info")
 
 options.register ('useGenJets',
-                  True, # default value
+                  False, # default value
                   VarParsing.VarParsing.multiplicity.singleton, # singleton or list
                   VarParsing.VarParsing.varType.bool,          # string, int, or float
                   "if true models will expect jet collections to be of the type vector< reco::GenJet >")

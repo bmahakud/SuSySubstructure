@@ -13,7 +13,7 @@ echo "FILES ON WORKER NODE BEFORE EXECUTION"
 echo "-------------------------------------"
 ls 
 
-cmsRun SuSySubstructureAnalysis.py inputFilesConfig=QCDsample_susyPAT outputFile=QCDsample_LPCSUSYPAT_<SKIP> applySUSYfilter=False numEvents=<NEVENTS> skipEvents=<SKIP>
+cmsRun SuSySubstructureAnalysis.py outputFile=<SAMPLE>_<INDEX> applySUSYfilter=False files=<FILELIST>
 
 echo "------------------------------------"
 echo "FILES ON WORKER NODE AFTER EXECUTION"
