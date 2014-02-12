@@ -56,15 +56,13 @@ process.RA2baseline = cms.EDFilter("RA2baselineSelection",
 
 # official lepton filter
 
-process.load("AWhitbeck.SuSySubstructure.RA2Leptons_cff")
+#process.load("AWhitbeck.SuSySubstructure.RA2Leptons_cff")
 
 #######################
 # RA2 Event Filtering
 #######################
 
-#from SandBox.Skims.RA2CleaningFilterResults_cfg import *
-#process.load("SandBox.Skims.RA2CleaningFilterResults_cfg")
-process.load("AWhitbeck.SuSySubstructure.RA2CleaningFilterResults_cfg")
+#process.load("AWhitbeck.SuSySubstructure.RA2CleaningFilterResults_cfg")
 
 # CLUSTER PARTICLES
 
@@ -211,9 +209,9 @@ process.susyFilterSequence = cms.Sequence( process.smsModelFilter )
 if( options.applySUSYfilter ):
 
     process.SuSySubstructureSequence = cms.Sequence( process.susyFilterSequence*
-                                                     process.ra2ElectronVeto*
-                                                     process.ra2PFMuonVeto*
-                                                     #process.leptonFilterSequence*
+                                                     #process.ra2ElectronVeto*
+                                                     #process.ra2PFMuonVeto*
+                                                     process.leptonFilterSequence*
                                                      #process.RA2baseline*
                                                      #process.cleaningOnFilterResults*
                                                      process.bulkSequence
@@ -221,9 +219,9 @@ if( options.applySUSYfilter ):
     
 else:
     
-    process.SuSySubstructureSequence = cms.Sequence( process.ra2ElectronVeto*
-                                                     process.ra2PFMuonVeto*
-                                                     #process.leptonFilterSequence*
+    process.SuSySubstructureSequence = cms.Sequence( #process.ra2ElectronVeto*
+                                                     #process.ra2PFMuonVeto*
+                                                     process.leptonFilterSequence*
                                                      #process.RA2baseline*
                                                      #process.cleaningOnFilterResults*
                                                      process.bulkSequence
