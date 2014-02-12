@@ -96,10 +96,11 @@ private:
     std::vector< double > pt;
     std::vector< double > eta;
     std::vector< double > mass;
-    std::vector< double > dPhi;  // delta phi between the i'th jet and the mHt vector
+    std::vector< double > phi;  
     int nJets;
     double sumJetMass;
     double missHt;
+    double missHtPhi;
     double Ht;
 
   };
@@ -268,6 +269,7 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
         jetKin[ iJetColl ]->pt.push_back  (   iJet->pt()   );
         jetKin[ iJetColl ]->eta.push_back (   iJet->eta()  );
+        jetKin[ iJetColl ]->phi.push_back (   iJet->phi()  );
         jetKin[ iJetColl ]->mass.push_back(   iJet->mass() );
 
         jetKin[ iJetColl ]->Ht  += iJet->pt();
@@ -279,9 +281,11 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
     } // end loop over iJet
 
-    jetKin[ iJetColl ]->missHt  = sqrt( pow( negativePx_pt30 , 2 ) + pow( negativePy_pt30 , 2 ) ) ;
+    jetKin[ iJetColl ]->missHt   = sqrt( pow( negativePx_pt30 , 2 ) + pow( negativePy_pt30 , 2 ) ) ;
 
-    jetKin[ iJetColl ]->nJets = jetKin[ iJetColl ]->pt.size();
+    jetKin[ iJetColl ]->missHtPhi = acos( negativePx_pt30 / jetKin[ iJetColl ]->missHt ) ;
+
+    jetKin[ iJetColl ]->nJets    = jetKin[ iJetColl ]->pt.size() ;
 
   } // end loop over jet collection list
 
@@ -327,6 +331,7 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
         particleKin[ iParticleColl ]->pt.push_back  (   p4.pt()   );
         particleKin[ iParticleColl ]->eta.push_back (   p4.eta()  );
+        particleKin[ iParticleColl ]->phi.push_back (   p4.phi()  );
         particleKin[ iParticleColl ]->mass.push_back(   p4.mass() );
 
         particleKin[ iParticleColl ]->Ht  += p4.pt();
@@ -338,9 +343,11 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
     } // end loop over iParticle
 
-    particleKin[ iParticleColl ]->missHt  = sqrt( pow( negativePx_pt30 , 2 ) + pow( negativePy_pt30 , 2 ) ) ;
+    particleKin[ iParticleColl ]->missHt    = sqrt( pow( negativePx_pt30 , 2 ) + pow( negativePy_pt30 , 2 ) ) ;
 
-    particleKin[ iParticleColl ]->nJets = particleKin[ iParticleColl ]->pt.size();
+    particleKin[ iParticleColl ]->missHtPhi = acos( negativePx_pt30 / particleKin[ iParticleColl ]->missHt ) ;
+
+    particleKin[ iParticleColl ]->nJets     = particleKin[ iParticleColl ]->pt.size();
 
 
   } // end loop over jet collection list
@@ -364,12 +371,13 @@ void AnalysisTreeFiller::zeroJetKinematics(jetKinematics& jetKin){
     jetKin.eta.clear();
   if( jetKin.mass.size() > 0 )
     jetKin.mass.clear();
-  if( jetKin.dPhi.size() > 0 )
-    jetKin.dPhi.clear();
+  if( jetKin.phi.size() > 0 )
+    jetKin.phi.clear();
 
   jetKin.nJets      = 0. ;
   jetKin.sumJetMass = 0. ;
   jetKin.missHt     = 0. ;
+  jetKin.missHtPhi  = 0. ;
   jetKin.Ht         = 0. ;
 
   if( debug ){
@@ -388,16 +396,24 @@ void AnalysisTreeFiller::addJetKinToTree(jetKinematics& jetKin, TString tag, TTr
   tree.Branch( "pt_" + tag,   &jetKin.pt);
   tree.Branch( "eta_" + tag,  &jetKin.eta);
   tree.Branch( "mass_" + tag, &jetKin.mass);
-  tree.Branch( "dPhi_" + tag, &jetKin.dPhi);
+  tree.Branch( "phi_" + tag,  &jetKin.phi);
+  
   TString branchName  = "nJets_" + tag ; 
   TString branchTitle = "nJets_" + tag + "/I" ;   
   tree.Branch( branchName.Data() ,      &jetKin.nJets , branchTitle.Data() );
+  
   branchName  = "sumJetMass_" + tag ; 
   branchTitle = "sumJetMass_" + tag + "/D" ;   
   tree.Branch( branchName.Data() , &jetKin.sumJetMass , branchTitle.Data() );
+  
   branchName  = "missHt_" + tag ; 
   branchTitle = "missHt_" + tag + "/D" ;   
   tree.Branch( branchName.Data() ,     &jetKin.missHt , branchTitle.Data() );
+  
+  branchName  = "missHtPhi_" + tag ;
+  branchTitle = "missHtPhi_" + tag + "/D" ;   
+  tree.Branch( branchName.Data() ,     &jetKin.missHtPhi , branchTitle.Data() );
+  
   branchName  = "Ht_" + tag ;
   branchTitle = "Ht_" + tag + "/D" ;   
   tree.Branch( branchName.Data() ,         &jetKin.Ht , branchTitle.Data() );
