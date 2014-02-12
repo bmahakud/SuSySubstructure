@@ -96,8 +96,17 @@ SubjetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   std::vector<fastjet::PseudoJet> fatJets;
   std::vector<fastjet::PseudoJet> constituents;      
   fastjet::JetDefinition aktp12(fastjet::antikt_algorithm, clusterRadius);
+  
   // initialize object for counting subjets
-  fastjet::contrib::SubjetCountingCA subjetCounter_pt50(subjetMassCut,subjetPtImbalance,subjetMassCut,subjetPtCut);
+  if( debug ){
+    std::cout << "subjet declustering parameters:" << std::endl;
+    std::cout << "pt cut: " << subjetPtCut << std::endl;
+    std::cout << "mass cut: " << subjetMassCut << std::endl;
+    std::cout << "pt imbalannce: " << subjetPtImbalance << std::endl;
+    std::cout << "dR cut: " << subjetRcut << std::endl;
+  }
+
+  fastjet::contrib::SubjetCountingCA subjetCounter_pt50(subjetMassCut,subjetPtImbalance,subjetRcut,subjetPtCut);
   // -------------------------------------
 
   // syntax is probably not right!!!!

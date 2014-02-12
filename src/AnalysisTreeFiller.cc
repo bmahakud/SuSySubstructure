@@ -267,6 +267,7 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       if ( iJet->pt() > 30. && fabs( iJet->eta() ) < 5. ){
 
         jetKin[ iJetColl ]->pt.push_back  (   iJet->pt()   );
+        jetKin[ iJetColl ]->eta.push_back (   iJet->eta()  );
         jetKin[ iJetColl ]->mass.push_back(   iJet->mass() );
 
         jetKin[ iJetColl ]->Ht  += iJet->pt();
@@ -325,6 +326,7 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       if ( p4.pt() > 30. && fabs( p4.eta() ) < 5. ){
 
         particleKin[ iParticleColl ]->pt.push_back  (   p4.pt()   );
+        particleKin[ iParticleColl ]->eta.push_back (   p4.eta()  );
         particleKin[ iParticleColl ]->mass.push_back(   p4.mass() );
 
         particleKin[ iParticleColl ]->Ht  += p4.pt();
