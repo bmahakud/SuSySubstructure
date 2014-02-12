@@ -230,12 +230,12 @@ else:
 process.path = cms.Path(process.SuSySubstructureSequence)
 
 #OUPUT CONFIGURATION
-process.out = cms.OutputModule("PoolOutputModule",
-                               fileName = cms.untracked.string('test.root'),
-                               #save only events passing the full path
-                               #SelectEvents = cms.untracked.PSet( SelectEvents = cms.vstring('p') ),
-                               outputCommands = cms.untracked.vstring('keep *_*Jet*_*_*',
-                                                                      'keep *_*Substructure*_*_*')
-                               )
-
-process.outpath = cms.EndPath(process.out)
+#process.out = cms.OutputModule("PoolOutputModule",
+#                               fileName = cms.untracked.string('test.root'),
+#                               #save only events passing the full path
+#                               #SelectEvents = cms.untracked.PSet( SelectEvents = cms.vstring('p') ),
+#                               outputCommands = cms.untracked.vstring('keep *_*Jet*_*_*',
+#                                                                      'keep *_*Substructure*_*_*')
+#                               )
+#
+#process.outpath = cms.EndPath(process.out)
