@@ -38,7 +38,7 @@ options.register ('reportEvery',
                   "number of events to wait before printing report")
 
 options.register ('applySUSYfilter',
-                  True, # default value
+                  False, # default value
                   VarParsing.VarParsing.multiplicity.singleton, # singleton or list
                   VarParsing.VarParsing.varType.bool,          # string, int, or float
                   "if true filter is used to select a specific signal from gen-level info")
@@ -72,6 +72,44 @@ options.register ('leptonicTopFilter',
                   VarParsing.VarParsing.multiplicity.singleton, # singleton or list
                   VarParsing.VarParsing.varType.bool,          # string, int, or float
                   "use gen-level information to skip events in which a top decays leptonically")
+
+
+options.register ('maxMHT',
+                  9999999., # default value
+                  VarParsing.VarParsing.multiplicity.singleton, #singleton or list
+                  VarParsing.VarParsing.varType.float,          #string, int, or float
+                  "maximum missing Ht")
+
+options.register ('minMHT',
+                  200., # default value
+                  VarParsing.VarParsing.multiplicity.singleton, #singleton or list
+                  VarParsing.VarParsing.varType.float,          #string, int, or float
+                  "minimum missing Ht")
+
+options.register ('minHT',
+                  500., # default value
+                  VarParsing.VarParsing.multiplicity.singleton, #singleton or list
+                  VarParsing.VarParsing.varType.float,          #string, int, or float
+                  "minimum Ht")
+
+options.register ('maxHT',
+                  9999999., # default value
+                  VarParsing.VarParsing.multiplicity.singleton, #singleton or list
+                  VarParsing.VarParsing.varType.float,          #string, int, or float
+                  "maximum Ht")
+
+options.register ('minNjets',
+                  3, # default value
+                  VarParsing.VarParsing.multiplicity.singleton, #singleton or list
+                  VarParsing.VarParsing.varType.int,          #string, int, or float
+                  "minimum number of jets")
+
+options.register ('maxNjets',
+                  9999999, # default value
+                  VarParsing.VarParsing.multiplicity.singleton, #singleton or list
+                  VarParsing.VarParsing.varType.int,          #string, int, or float
+                  "maximum number of jets")
+
 
 
 # get and parse the command line arguments

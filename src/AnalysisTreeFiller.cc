@@ -306,7 +306,7 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     }
 
     Handle< std::vector < math::XYZTLorentzVector > > particleCands;
-    iEvent.getByLabel( pseudoParticleCollectionList[ iParticleColl ],"ak1p2Jets-Subjets",particleCands);
+    iEvent.getByLabel( pseudoParticleCollectionList[ iParticleColl ],particleCands);
 
     // set all variables in struct to zero or clear std::vectors
     zeroJetKinematics( *particleKin[ iParticleColl ] );

@@ -61,7 +61,7 @@ SubjetProducer::SubjetProducer(const edm::ParameterSet& iConfig):
   debug(iConfig.getUntrackedParameter<bool>("debug",true))
 {
   //produces< std::vector< reco::Jet > >(jetCollection+"-Subjets");
-  produces< std::vector< math::XYZTLorentzVector > >(jetCollection+"-Subjets"); 
+  produces< std::vector< math::XYZTLorentzVector > >(""); //(jetCollection+"-Subjets"); 
 }
 
 
@@ -194,7 +194,7 @@ SubjetProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   }// end loop over jets
 
-  iEvent.put(Subjets,   jetCollection+"-Subjets"   );
+  iEvent.put(Subjets) ; //,   jetCollection+"-Subjets"   );
 
 }
 
