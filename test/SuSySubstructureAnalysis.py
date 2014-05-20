@@ -211,7 +211,7 @@ if( options.applySUSYfilter ):
     process.SuSySubstructureSequence = cms.Sequence( process.susyFilterSequence*
                                                      #process.ra2ElectronVeto*
                                                      #process.ra2PFMuonVeto*
-                                                     process.leptonFilterSequence*
+                                                     #process.leptonFilterSequence*
                                                      #process.RA2baseline*
                                                      #process.cleaningOnFilterResults*
                                                      process.bulkSequence
@@ -221,7 +221,7 @@ else:
     
     process.SuSySubstructureSequence = cms.Sequence( #process.ra2ElectronVeto*
                                                      #process.ra2PFMuonVeto*
-                                                     process.leptonFilterSequence*
+                                                     #process.leptonFilterSequence*
                                                      #process.RA2baseline*
                                                      #process.cleaningOnFilterResults*
                                                      process.bulkSequence
