@@ -56,7 +56,7 @@ int main( int argc , char* argv[] ){
   // overriding using input!!!!
   //inputDirName = "/eos/uscms/store/user/lpcsusyhad/SusyRA2Analysis2012/19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_1025to1200_8TeV/" ;  
 
-  bool debug = true ;
+  bool debug = false ;
 
   RA2nTuple RA2tree( inputDirName + FileName , TreeName ) ;
 
