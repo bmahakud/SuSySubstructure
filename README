@@ -10,6 +10,13 @@ git clone https://github.com/awhitbeck/SuSySubstructure.git AWhitbeck/SuSySubstr
 cd AWhitbeck/SuSySubstructure
 ./retrieveFastJetTools.sh
 
+cd ../../
+git init
+git config core.sparsecheckout true
+git remote add origin https://github.com/awhitbeck/RA2
+echo SandBox/Skims/ >> .git/info/sparse-checkout
+git pull origin master
+
 # compile with scram b
 
 ##################
