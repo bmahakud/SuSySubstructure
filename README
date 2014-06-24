@@ -6,17 +6,18 @@ TO BE APPLIED TO SUSY ANALYSES.
 # git instructions #
 ####################
 
+git init
+git config core.sparsecheckout true
+git remote add RA2remote https://github.com/awhitbeck/RA2
+echo SandBox/Skims/ >> .git/info/sparse-checkout
+echo EGamma >> .git/info/sparse-checkout
+git pull origin master
+
 git clone https://github.com/awhitbeck/SuSySubstructure.git AWhitbeck/SuSySubstructure 
 cd AWhitbeck/SuSySubstructure
 ./retrieveFastJetTools.sh
 
 cd ../../
-git init
-git config core.sparsecheckout true
-git remote add origin https://github.com/awhitbeck/RA2
-echo SandBox/Skims/ >> .git/info/sparse-checkout
-echo EGamma >> .git/info/sparse-checkout
-git pull origin master
 
 # compile with scram b
 
