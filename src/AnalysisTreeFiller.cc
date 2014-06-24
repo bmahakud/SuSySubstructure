@@ -17,7 +17,7 @@
  collections should be deliniated used a ':'.  
 
  e.g.  for reading ak5PFJets and ak4PFJets collections, one 
- should pass "ak5PFJets:ak4PFJets" to jetCOllections.
+ should pass "ak5PFJets:ak4PFJets" to jetCollections.
 
  NOTE:  current, the get handle does not catch exceptions 
  from collections not being found in the event and thus 
