@@ -8,4 +8,4 @@ treeName = "RA2PreSelection"
 f = TFile(fileName,"READ")
 t = f.Get(treeName)
 
-t->Draw("HT")
+t.Draw("HT")
