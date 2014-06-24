@@ -2,7 +2,7 @@ universe = vanilla
 Executable            = runAddFatJetsToTree_<SAMPLE>_<INDEX>.sh
 Requirements          = Memory >= 199 &&OpSys == "LINUX"&& (Arch != "DUMMY" )&& Disk > 1000000
 Should_Transfer_Files = YES
-transfer_input_files=/uscms_data/d2/awhitbe1/workArea/RA2studies/gitTop/CMSSW_5_3_8_patch1/src/AWhitbeck/SuSySubstructure/test/divideUpMassPoints/addFatJetsToTree.exe /uscms_data/d2/awhitbe1/workArea/RA2studies/gitTop/CMSSW_5_3_8_patch1/src/AWhitbeck/SuSySubstructure/test/divideUpMassPoints/runAddFatJetsToTree_<SAMPLE>_<INDEX>.sh
+transfer_input_files=/uscms_data/d2/awhitbe1/workArea/RA2studies/gitTop/CMSSW_5_3_8_patch1/src/AWhitbeck/SuSySubstructure/test/addFatJetsToTree/addFatJetsToTree.exe, /uscms_data/d2/awhitbe1/workArea/RA2studies/gitTop/CMSSW_5_3_8_patch1/src/AWhitbeck/SuSySubstructure/test/addFatJetsToTree/runAddFatJetsToTree_<SAMPLE>_<INDEX>.sh
 WhenToTransferOutput  = ON_EXIT_OR_EVICT
 Output = out_<SAMPLE>_<INDEX>_$(Cluster).stdout
 Error  = out_<SAMPLE>_<INDEX>_$(Cluster).stderr
