@@ -17,6 +17,11 @@ git remote add origin https://github.com/awhitbeck/RA2
 echo SandBox/Skims/ >> .git/info/sparse-checkout
 git pull origin master
 
+setenv CVSROOT ":ext:whitbeck@lxplus5.cern.ch:/afs/cern.ch/user/c/cvscmssw/public/CMSSW"
+cvs co -r CutBasedId_V00-00-05 UserCode/EGamma/EGammaAnalysisTools
+mv UserCode/EGamma .
+rm -r UserCode/
+
 # compile with scram b
 
 ##################
