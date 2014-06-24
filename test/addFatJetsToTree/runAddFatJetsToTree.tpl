@@ -5,7 +5,7 @@ date
 source /uscmst1/prod/sw/cms/bashrc prod
 workerNodeDir=`pwd`
 echo $workerNodeDir
-cd /uscms_data/d2/awhitbe1/workArea/RA2studies/CMSSW_5_3_8_patch1/src/AWhitbeck/SuSySubstructure/test/addFatJetsToTree/
+cd /uscms_data/d2/awhitbe1/workArea/RA2studies/gitTop/CMSSW_5_3_8_patch1/src/AWhitbeck/SuSySubstructure/test/addFatJetsToTree/
 eval `scram runtime -sh`
 cd -
 

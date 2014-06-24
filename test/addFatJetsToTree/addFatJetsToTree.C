@@ -10,7 +10,7 @@ Original Author: Andrew Whitbeck - May 5, 2014
 
 Should be compiled with:
 
-g++ `root-config --cflags` ../src/RA2nTuple.cc addFatJetsToTree.C `root-config --glibs` -l/uscmst1/prod/sw/cms/slc5_amd64_gcc462/external/fastjet/3.0.1-cms3/lib/libfastjet.so -I/uscmst1/prod/sw/cms/slc5_amd64_gcc462/external/fastjet/3.0.1-cms3/include/ -o addFatJetsToTree.exe -Wall  
+g++ `root-config --cflags` RA2nTuple.cc addFatJetsToTree.C `root-config --glibs` -l/uscmst1/prod/sw/cms/slc5_amd64_gcc462/external/fastjet/3.0.1-cms3/lib/libfastjet.so -I/uscmst1/prod/sw/cms/slc5_amd64_gcc462/external/fastjet/3.0.1-cms3/include/ -o addFatJetsToTree.exe -Wall  
 
 should be run with:
 
