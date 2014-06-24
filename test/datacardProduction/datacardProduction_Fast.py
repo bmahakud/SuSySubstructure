@@ -1,42 +1,3 @@
-from ROOT import TFile, TTree, TChain
-from binning import *
-from datacard import *
-from sumJetMassBinning import *
-from gluinoXsec import *
-
-def computeYields(  tree , 
-					binning ,
-					yields , 
-					weight ,
-					sig = False
-				  ) :
-
-	for iBin in range( binning.nBins ): 
-
-		if sig : 
-			cutString = "Filter_PBNRFilter==1 && Filter_eeBadScFilter==1 && Filter_ecalLaserCorrFilter==1 && Filter_hcalLaserEventFilter==1 && Filter_ra2EcalBEFilter==1 && Filter_ra2EcalTPFilter==1 && Filter_eeNoiseFilter==1 && Filter_trackingFailureFilter==1 && Filter_inconsistentMuons==1 && Filter_greedyMuons==1 && PATMuonsPFIDIsoNum == 0 && PATElectronsIDIsoNum==0"
-		else : 
-			cutString = "DeltaPhi1>.5 && DeltaPhi2>.5 && DeltaPhi3>.3"
-
-		for i in range( len( binning.branchNames ) ) : 
-
-			branchName = binning.branchNames[i]
-			cutString+="&&{0}>{1}&&{0}<{2}".format(branchName,binning.lowBinEdge[branchName][iBin],binning.highBinEdge[branchName][iBin])
-
-		#print cutString
-
-		yields[iBin] = tree.Draw(binning.branchNames[0],cutString)
-		#print yields[iBin]
-
-		yields[iBin] = float( yields[iBin] ) * weight		
-		#print yields[iBin]
-
-		if yields[iBin] == 0 :
-			#print "ZERO!!"
-			yields[iBin] = 0.000001
-
-####### end of computeYields()
-
 def setAliases( tree ) : 
 
 	tree.SetAlias("HT","Ht_patJetsAK5PFPt50Eta25")
@@ -77,7 +38,7 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 
 	#print TTjetstree.Draw("NJets","NJets>7")
 
-	sampleName = "T5tttt"
+	sampleName = "T5VV"
 
 	fileNames = []
 
@@ -101,7 +62,7 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_400to750_mLSP_25to525_8TeV"))
 
 	### signal files for T5tttt trees
-	fileNames.append(sigDir+"{0}/divided/scan*.root".format("29May2014_SignalTree_SMS_MG_T5tttt"))
+	fileNames.append(sigDir+"{0}/divided/scan*.root".format(""))
 
 	treeName = "massMom{0}_massDau{1}".format( massMom , massDau )
 	#treeName = "RA2PreSelection"
