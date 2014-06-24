@@ -56,8 +56,8 @@ vector< TLorentzVector > JetFattening( vector< TLorentzVector > jets ,
 
     }// end debug
 
-    if ( jets[ iJet ].Pt() < 50.0 ) continue ;
-    if ( fabs( jets[ iJet ].Eta() ) > 2.4 )  continue ;
+    if ( jets[ iJet ].Pt() < 30.0 ) continue ;
+    if ( fabs( jets[ iJet ].Eta() ) > 5.0 )  continue ;
 
     constituents.push_back( PseudoJet( jets[ iJet ].Px(),
 				       jets[ iJet ].Py(),
