@@ -30,8 +30,8 @@ for f in dirList :
 		continue
 
 	os.system( "sed -e 's|<DIR>|{0}|g' -e 's|<FILE>|{1}|g'< runDivideUpMassPoints.tpl > runDivideUpMassPoints_{2}_{3}.sh".format( inputDir , f , sample , ifile ) )
-	os.system( "sed -e 's|<START>|{0}|g' -e 's|<SAMPLE>|{1}|g' < runDivideUpMassPoints_condorSub.tpl > runDivideUpMassPoints_condorSub_{1}_{0}".format( ifile , sample ) )
+	os.system( "sed -e 's|<INDEX>|{0}|g' -e 's|<SAMPLE>|{1}|g' < divideUpMassPoints_condorSub.tpl > divideUpMassPoints_condorSub_{1}_{0}".format( ifile , sample ) )
 
-	os.system("condor_submit runDivideUpMassPoints_condorSub_{0}_{1}".format( sample , ifile ) )
+	os.system("condor_submit divideUpMassPoints_condorSub_{0}_{1}".format( sample , ifile ) )
 
 	ifile+=1
