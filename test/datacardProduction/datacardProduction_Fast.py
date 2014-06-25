@@ -19,7 +19,7 @@ def computeYields(tree ,
 
 				var = getattr( tree , branch )
 
-				if var > binning.lowBinEdge[branch][iBin] && var < binning.highBinEdge[branch][iBin] : 
+				if var > binning.lowBinEdge[branch][iBin] and var < binning.highBinEdge[branch][iBin] : 
 					yields[iBin] += 1
 
 			# #################################
