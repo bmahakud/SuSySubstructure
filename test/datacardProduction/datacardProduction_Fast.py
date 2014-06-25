@@ -48,7 +48,7 @@ def computeYields(tree ,
 
 def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) : 
 
-	bkgDir = "./eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V5/"
+	bkgDir = "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V5/"
 
 	### background trees
 	QCD500tree = TChain("RA2TreeFiller/AnalysisTree")
