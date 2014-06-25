@@ -200,13 +200,13 @@ RA2TreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   // ******************************
   // DeltaPhi calculation
   View<reco::Jet>::const_iterator iJet = MHTjetCands->begin();
-  DeltaPhi1 = abs( MHTphi - iJet->phi() ) ; 
+  DeltaPhi1 = fabs( MHTphi - iJet->phi() ) ; 
   if( iJet != HTjetCands->end() ){
     ++iJet ;
-    DeltaPhi2 = abs( MHTphi - iJet->phi() ) ;
+    DeltaPhi2 = fabs( MHTphi - iJet->phi() ) ;
     if( iJet != HTjetCands->end() ){
       ++iJet ; 
-      DeltaPhi3 = abs( MHTphi - iJet->phi() ) ;
+      DeltaPhi3 = fabs( MHTphi - iJet->phi() ) ;
     }
   }
   // ******************************
