@@ -111,7 +111,7 @@ RA2TreeFiller::RA2TreeFiller(const edm::ParameterSet& iConfig):
   AnalysisTree->Branch("DeltaPhi2",&DeltaPhi2,"DeltaPhi2/D");
   AnalysisTree->Branch("DeltaPhi3",&DeltaPhi3,"DeltaPhi3/D");
   AnalysisTree->Branch("sumJetMass",&sumJetMass,"sumJetMass/D");
-  AnalysisTree->Branch("nJets",&NJets,"nJets/I");
+  AnalysisTree->Branch("NJets",&NJets,"NJets/I");
 
   if( debug ){
 
