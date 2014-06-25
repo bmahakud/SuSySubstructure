@@ -1,44 +1,69 @@
-def setAliases( tree ) : 
+def computeYields(tree , 
+     			binning ,
+				yields , 
+				weight ,
+				sig = False
+				):
 
-	tree.SetAlias("HT","Ht_patJetsAK5PFPt50Eta25")
-	tree.SetAlias("MHT","missHt_patJetsAK5PFPt30")
-	tree.SetAlias("NJets","nJets_patJetsAK5PFPt50Eta25")
-	tree.SetAlias("sumJetMass","sumJetMass_fattenedJets")
-	tree.SetAlias("DeltaPhi1","missHtPhi_patJetsAK5PFPt30[0]")
-	tree.SetAlias("DeltaPhi2","missHtPhi_patJetsAK5PFPt30[1]")
-	tree.SetAlias("DeltaPhi3","missHtPhi_patJetsAK5PFPt30[2]")
+	for iEvt in range( tree.GetEntries() ) : 
 
-	#print "events:",tree.GetEntries()
+		tree.GetEntry( iEvt )
 
-	if tree == None : 
-		raise InputError("datacardProduction - error grabbing tree: "+fileName)
+		if sig : 
+			if tree.Filter_PBNRFilter!=1 and Filter_eeBadScFilter!=1 and Filter_ecalLaserCorrFilter!=1 and Filter_hcalLaserEventFilter!=1 and Filter_ra2EcalBEFilter!=1 and Filter_ra2EcalTPFilter!=1 and Filter_eeNoiseFilter!=1 and Filter_trackingFailureFilter!=1 and Filter_inconsistentMuons!=1 and Filter_greedyMuons!=1 and PATMuonsPFIDIsoNum!=0 and PATElectronsIDIsoNum!=0 :
+				continue
+
+		for iBin in range( binning.nBins ): 
+			
+			for branch in binning.branchNames : 
+
+				var = getattr( tree , branch )
+
+				if var > binning.lowBinEdge[branch][iBin] && var < binning.highBinEdge[branch][iBin] : 
+					yields[iBin] += 1
+
+			# #################################
+			# end loop over cuts
+		# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+		# end loop over bins
+	# $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+	# end loop over events
+
+	## apply weights
+	for iBin in range( binning.nBins ): 
+		
+		if yields[iBin] == 0 :
+			#print "ZERO!!"
+			yields[iBin] = 0.000001
+		else : 
+			yields[iBin] = float( yields[iBin] ) * weights
 
 ####### end of getTreeSetAliases()
 
 def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) : 
 
-	inputDir = "./"
+	bkgDir = "./eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V5/"
 
 	### background trees
-	QCD500file = TFile( "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V4/QCD_500HT1000_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" , "READ" )
-	QCD500tree = QCD500file.Get( "TreeFiller/AnalysisTree" )
-	setAliases( QCD500tree )
-	QCD1000file = TFile( "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V4/QCD_1000HTinf_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" , "READ" )
-	QCD1000tree = QCD1000file.Get( "TreeFiller/AnalysisTree" )
-	setAliases( QCD1000tree )
-	Wjetsfile = TFile( "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V4/WJetsToLNu_HT-400ToInf_8TeV_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" , "READ" )
-	Wjetstree = Wjetsfile.Get( "TreeFiller/AnalysisTree" )
-	setAliases( Wjetstree )
-	Zjetsfile = TFile( "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V4/ZJetsToNuNu_400_HT_inf_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" , "READ" )
-	Zjetstree = Zjetsfile.Get( "TreeFiller/AnalysisTree" )
-	setAliases( Zjetstree )
-	TTjetsfile = TFile( "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V4/TTJets_SemiLeptMGDecays_8TeV_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" , "READ" )
-	TTjetstree = TTjetsfile.Get( "TreeFiller/AnalysisTree" )
-	setAliases( TTjetstree )
+	QCD500tree = TChain("RA2TreeFiller/AnalysisTree")
+	QCD500tree.Add( bkgDir + "QCD_500HT1000_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" )
+
+	QCD1000tree = TChain( "RA2TreeFiller/AnalysisTree" )
+	QCD1000tree.Add( bkgDir + "QCD_1000HTinf_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" )
+
+	Wjetstree = TChain( "RA2TreeFiller/AnalysisTree" )
+	Wjetstree.Add( bkgDir + "WJetsToLNu_400HTinf_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" )
+	Wjetstree.Add( bkgDir + "WJetsToLNu_400HTinf_v2_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" )
+
+	Zjetstree = TChain( "RA2TreeFiller/AnalysisTree" ) 
+	Zjetstree.Add( bkgDir + "ZJetsToNuNu_400HTinf_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" )
+	
+	TTjetstree = TChain( "RA2TreeFilller/AnalysisTree" ) 
+	TTjetstree.Add( bkgDir + "TTJets_SemiLeptMGDecays_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" )
 
 	#print TTjetstree.Draw("NJets","NJets>7")
 
-	sampleName = "T5VV"
+	sampleName = "T1tttt"
 
 	fileNames = []
 
@@ -47,7 +72,7 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 	### signal files for T1tttt trees
 	#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_25to500_8TeV.root")
 	#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_400to750_mLSP_25to550_8TeV.root")
-	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_25to500_8TeV"))
+	fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_25to500_8TeV"))
 	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_525to875_8TeV"))
 	#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_25to500_8TeV.root")
 	#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_525to1000_8TeV_V2.root")
@@ -62,7 +87,7 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_400to750_mLSP_25to525_8TeV"))
 
 	### signal files for T5tttt trees
-	fileNames.append(sigDir+"{0}/divided/scan*.root".format(""))
+	#fileNames.append(sigDir+"{0}/divided/scan*.root".format(""))
 
 	treeName = "massMom{0}_massDau{1}".format( massMom , massDau )
 	#treeName = "RA2PreSelection"
@@ -79,15 +104,15 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 		myDatacard = datacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 
 	#print "QCD500"
-	computeYields( QCD500tree  , myDatacard.binning , myDatacard.bkgYields["QCD500"]         , 6.28   )
+	computeYields( QCD500tree  , myDatacard.binning , myDatacard.bkgYields["QCD500"]         , 5.582   )
 	#print "QCD1000"
-	computeYields( QCD1000tree , myDatacard.binning , myDatacard.bkgYields["QCD1000"]        , 0.316  )
+	computeYields( QCD1000tree , myDatacard.binning , myDatacard.bkgYields["QCD1000"]        , 0.31    )
 	#print "ZinvJets"
-	computeYields( Zjetstree   , myDatacard.binning , myDatacard.bkgYields["ZinvJets"]       , 0.040  )
+	computeYields( Zjetstree   , myDatacard.binning , myDatacard.bkgYields["ZinvJets"]       , 0.134   )
 	#print "WlvJets"
-	computeYields( Wjetstree   , myDatacard.binning , myDatacard.bkgYields["WlvJets"]        , 0.126  )
+	computeYields( Wjetstree   , myDatacard.binning , myDatacard.bkgYields["WlvJets"]        , 0.106   )
 	#print "TTsemiLeptJets"
-	computeYields( TTjetstree  , myDatacard.binning , myDatacard.bkgYields["TTsemiLeptJets"] , 0.082  )
+	computeYields( TTjetstree  , myDatacard.binning , myDatacard.bkgYields["TTsemiLeptJets"] , 0.082   )
 
 	sigTree = TChain(treeName)
 	for fileName in fileNames :
@@ -113,9 +138,9 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 	#buildCards( m , 1 , True)
 	#buildCards( m , 1 , False)
 
-for m in range(1200,1425,100) :
+for m in range(25,125,100) :
 
-	buildCards( m , 25 , True)
-	buildCards( m , 25 , False)
+	buildCards( 1025 , m , True)
+	buildCards( 1025 , m , False)
 
 
