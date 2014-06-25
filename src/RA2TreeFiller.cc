@@ -95,7 +95,8 @@ private:
 
 
 RA2TreeFiller::RA2TreeFiller(const edm::ParameterSet& iConfig):
-  jetCollection(iConfig.getUntrackedParameter<std::string>("jetCollection","patJetsAK5PFPt30")),
+  HTjetCollection(iConfig.getUntrackedParameter<std::string>("HTjetCollection","patJetsAK5PFPt50Eta25")),
+  MHTjetCollection(iConfig.getUntrackedParameter<std::string>("MHTjetCollection","patJetsAK5PFPt30")),
   pseudoParticleCollection(iConfig.getUntrackedParameter<std::string>("pseudoParticleCollection","fatjetSubjets")),
   debug(iConfig.getUntrackedParameter<bool>("debug",false))
 {
@@ -152,10 +153,10 @@ RA2TreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   // -------------------
 
   Handle< View<reco::Jet> > HTjetCands;
-  iEvent.getByLabel( HTjetCollectionList,HTjetCands);
+  iEvent.getByLabel( HTjetCollection,HTjetCands);
 
   Handle< View<reco::Jet> > MHTjetCands;
-  iEvent.getByLabel( MHTjetCollectionList,MHTjetCands);
+  iEvent.getByLabel( MHTjetCollection,MHTjetCands);
 
   // set all variables in struct to zero or clear std::vectors
   HT = MHT = sumJetMass = 0. ;
@@ -172,7 +173,7 @@ RA2TreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       iJet != HTjetCands->end();
       ++iJet){
 
-    if ( debug ) std::cout  << "num. jets: " << jetCands->size() << std::endl;
+    if ( debug ) std::cout  << "num. jets: " << HTjetCands->size() << std::endl;
 
     HT += iJet->pt();
 
@@ -185,7 +186,7 @@ RA2TreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       iJet != MHTjetCands->end();
       ++iJet){
 
-    if ( debug ) std::cout  << "num. jets: " << jetCands->size() << std::endl;
+    if ( debug ) std::cout  << "num. jets: " << MHTjetCands->size() << std::endl;
 
     negativePx_MHTjets -= iJet->px();
     negativePy_MHTjets -= iJet->py();
@@ -194,18 +195,18 @@ RA2TreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   // ##############################
 
   MHT = sqrt( pow( negativePx_MHTjets , 2 ) + pow( negativePy_MHTjets , 2 ) ) ;
-  MHTphi = acos( negativePx_MHTjets / MHT ) ;
+  double MHTphi = acos( negativePx_MHTjets / MHT ) ;
 
   // ******************************
   // DeltaPhi calculation
   View<reco::Jet>::const_iterator iJet = MHTjetCands->begin();
-  DeltaPhi1 = abs( MHTphi - iJet.Phi() ) ; 
+  DeltaPhi1 = abs( MHTphi - iJet.phi() ) ; 
   if( iJet != HTjetCands->end() ){
     ++iJet ;
-    DeltaPhi2 = abs( MHTphi - iJet.Phi() ) ;
+    DeltaPhi2 = abs( MHTphi - iJet.phi() ) ;
     if( iJet != HTjetCands->end() ){
       ++iJet ; 
-      DeltaPhi3 = abs( MHTphi - iJet.Phi() ) ;
+      DeltaPhi3 = abs( MHTphi - iJet.phi() ) ;
     }
   }
   // ******************************
