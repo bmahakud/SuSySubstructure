@@ -52,20 +52,20 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 
 	### background trees
 	QCD500tree = TChain("RA2TreeFiller/AnalysisTree")
-	QCD500tree.Add( bkgDir + "QCD_500HT1000_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" )
+	QCD500tree.Add( bkgDir + "QCD_500HT1000_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
 	QCD1000tree = TChain( "RA2TreeFiller/AnalysisTree" )
-	QCD1000tree.Add( bkgDir + "QCD_1000HTinf_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" )
+	QCD1000tree.Add( bkgDir + "QCD_1000HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
 	Wjetstree = TChain( "RA2TreeFiller/AnalysisTree" )
-	Wjetstree.Add( bkgDir + "WJetsToLNu_400HTinf_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" )
-	Wjetstree.Add( bkgDir + "WJetsToLNu_400HTinf_v2_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" )
+	Wjetstree.Add( bkgDir + "WJetsToLNu_400HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+	Wjetstree.Add( bkgDir + "WJetsToLNu_400HTinf_v2_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
 	Zjetstree = TChain( "RA2TreeFiller/AnalysisTree" ) 
-	Zjetstree.Add( bkgDir + "ZJetsToNuNu_400HTinf_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" )
+	Zjetstree.Add( bkgDir + "ZJetsToNuNu_400HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 	
 	TTjetstree = TChain( "RA2TreeFilller/AnalysisTree" ) 
-	TTjetstree.Add( bkgDir + "TTJets_SemiLeptMGDecays_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" )
+	TTjetstree.Add( bkgDir + "TTJets_SemiLeptMGDecays_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
 	#print TTjetstree.Draw("NJets","NJets>7")
 
