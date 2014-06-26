@@ -47,6 +47,8 @@ def computeYields(tree ,
 		else : 
 			yields[iBin] = float( yields[iBin] ) * weight
 
+	print yields
+
 ####### end of getTreeSetAliases()
 
 def buildCards( massMom , massDau , datacard ) :
