@@ -153,7 +153,7 @@ QCD500proc.join() ;
 #QCD1000proc.join() ; ZjetProc.join() ; WjetProc.join() ; TTjetProc.join()                                                           
 #QCD500procSMJ.join() ; QCD1000procSMJ.join() ; ZjetProcSMJ.join() ; WjetProcSMJ.join() ; TTjetProcSMJ.join()                                                           
 
-print referenceCard.bkgYields["QCD500"]
+print QCD500yields
 
 sigProcess = []
 for m in range(25,875,100) :	
