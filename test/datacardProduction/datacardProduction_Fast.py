@@ -43,7 +43,7 @@ def computeYields(tree ,
 			#print "ZERO!!"
 			yields[iBin] = 0.000001
 		else : 
-			yields[iBin] = float( yields[iBin] ) * weights
+			yields[iBin] = float( yields[iBin] ) * weight
 
 ####### end of getTreeSetAliases()
 
