@@ -144,17 +144,19 @@ QCD500procSMJ.start() ; QCD1000procSMJ.start() ; ZjetProcSMJ.start() ; WjetProcS
 print "Waiting for all background processes to finish..."                                                                                                                            
 QCD500proc.join() ; QCD1000proc.join() ; ZjetProc.join() ; WjetProc.join() ; TTjetProc.join()                                                           
 QCD500procSMJ.join() ; QCD1000procSMJ.join() ; ZjetProcSMJ.join() ; WjetProcSMJ.join() ; TTjetProcSMJ.join()                                                           
-
+print "Start signal processes"
 for m in range(25,125,100) :	
 
 	myDatacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 	myDatacard.bkgYields = referenceCard.bkgYields
 	sigProcess.append( target=buildCards , args=( 1025 , m , myDatacards ) )	
 	sigProcess[-1].start()
-	sigProcess[-1].join()
-
+	
 	myDatacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 	myDatacard.bkgYields = referenceCardSMJ.bkgYields
 	sigProcess.append( target=buildCards , args=( 1025 , m , myDatacards ) )	
 	sigProcess[-1].start()
-	sigProcess[-1].join()
+	
+print "Waiting for all signal processes to finish..."
+for p in sigProcess : 
+	p[-1].join()
