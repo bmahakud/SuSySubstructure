@@ -46,7 +46,7 @@ def computeYields(tree ,
 
 ####### end of getTreeSetAliases()
 
-buildCards( massMom , massDau , datacard ) :
+def buildCards( massMom , massDau , datacard ) :
 
 	sampleName = "T1tttt"
 
