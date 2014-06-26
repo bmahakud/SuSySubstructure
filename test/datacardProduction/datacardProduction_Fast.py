@@ -3,6 +3,7 @@ from binning import *
 from datacard import *
 from sumJetMassBinning import *
 from gluinoXsec import *
+from multiprocessing import Process
 
 def computeYields(tree , 
      			binning ,
