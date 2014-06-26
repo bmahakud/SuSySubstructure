@@ -147,12 +147,12 @@ QCD500procSMJ.join() ; QCD1000procSMJ.join() ; ZjetProcSMJ.join() ; WjetProcSMJ.
 print "Start signal processes"
 for m in range(25,125,100) :	
 
-	myDatacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
+	myDatacard = datacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 	myDatacard.bkgYields = referenceCard.bkgYields
 	sigProcess.append( target=buildCards , args=( 1025 , m , myDatacards ) )	
 	sigProcess[-1].start()
 	
-	myDatacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
+	myDatacard = datacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 	myDatacard.bkgYields = referenceCardSMJ.bkgYields
 	sigProcess.append( target=buildCards , args=( 1025 , m , myDatacards ) )	
 	sigProcess[-1].start()
