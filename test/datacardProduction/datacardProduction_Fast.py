@@ -144,7 +144,9 @@ QCD500procSMJ.start() ; QCD1000procSMJ.start() ; ZjetProcSMJ.start() ; WjetProcS
 print "Waiting for all background processes to finish..."                                                                                                                            
 QCD500proc.join() ; QCD1000proc.join() ; ZjetProc.join() ; WjetProc.join() ; TTjetProc.join()                                                           
 QCD500procSMJ.join() ; QCD1000procSMJ.join() ; ZjetProcSMJ.join() ; WjetProcSMJ.join() ; TTjetProcSMJ.join()                                                           
+
 print "Start signal processes"
+sigProcess = []
 for m in range(25,125,100) :	
 
 	myDatacard = datacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
