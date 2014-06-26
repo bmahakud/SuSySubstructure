@@ -123,7 +123,7 @@ referenceCardSMJ = datacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "
 referenceCard = datacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 
 #print "QCD500"                                                                                                                                                            
-#computeYields( QCD500tree  , myDatacard.binning , myDatacard.bkgYields["QCD500"]         , 5.582   )
+computeYields( QCD500tree  , referenceCard.binning , referenceCard.bkgYields["QCD500"]         , 5.582   )
 QCD500proc = Process( target=computeYields , args=( QCD500tree  , referenceCard.binning , referenceCard.bkgYields["QCD500"]         , 5.582   ) )
 QCD500procSMJ = Process( target=computeYields , args=( QCD500tree  , referenceCardSMJ.binning , referenceCardSMJ.bkgYields["QCD500"]         , 5.582   ) )
 #print "QCD1000"                                                                                                                                                           
@@ -143,11 +143,11 @@ WjetProcSMJ = Process( target=computeYields , args=( Wjetstree   , referenceCard
 TTjetProc = Process( target=computeYields , args=( TTjetstree  , referenceCard.binning , referenceCard.bkgYields["TTsemiLeptJets"] , 0.082   ) )
 TTjetProcSMJ = Process( target=computeYields , args=( TTjetstree  , referenceCardSMJ.binning , referenceCardSMJ.bkgYields["TTsemiLeptJets"] , 0.082   ) )
 
-QCD500proc.start() ; 
+#QCD500proc.start() ; 
 #QCD1000proc.start() ; ZjetProc.start() ; WjetProc.start() ; TTjetProc.start()                                                      
 #QCD500procSMJ.start() ; QCD1000procSMJ.start() ; ZjetProcSMJ.start() ; WjetProcSMJ.start() ; TTjetProcSMJ.start()                                                      
 print "Waiting for all background processes to finish..."                                                                                                                            
-QCD500proc.join() ; 
+#QCD500proc.join() ; 
 #QCD1000proc.join() ; ZjetProc.join() ; WjetProc.join() ; TTjetProc.join()                                                           
 #QCD500procSMJ.join() ; QCD1000procSMJ.join() ; ZjetProcSMJ.join() ; WjetProcSMJ.join() ; TTjetProcSMJ.join()                                                           
 
