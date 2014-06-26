@@ -36,6 +36,8 @@ def computeYields(tree ,
 	# $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 	# end loop over events
 
+	print yields
+
 	## apply weights
 	for iBin in range( binning.nBins ): 
 		
@@ -139,11 +141,15 @@ WjetProcSMJ = Process( target=computeYields , args=( Wjetstree   , referenceCard
 TTjetProc = Process( target=computeYields , args=( TTjetstree  , referenceCard.binning , referenceCard.bkgYields["TTsemiLeptJets"] , 0.082   ) )
 TTjetProcSMJ = Process( target=computeYields , args=( TTjetstree  , referenceCardSMJ.binning , referenceCardSMJ.bkgYields["TTsemiLeptJets"] , 0.082   ) )
 
-QCD500proc.start() ; QCD1000proc.start() ; ZjetProc.start() ; WjetProc.start() ; TTjetProc.start()                                                      
-QCD500procSMJ.start() ; QCD1000procSMJ.start() ; ZjetProcSMJ.start() ; WjetProcSMJ.start() ; TTjetProcSMJ.start()                                                      
+QCD500proc.start() ; 
+#QCD1000proc.start() ; ZjetProc.start() ; WjetProc.start() ; TTjetProc.start()                                                      
+#QCD500procSMJ.start() ; QCD1000procSMJ.start() ; ZjetProcSMJ.start() ; WjetProcSMJ.start() ; TTjetProcSMJ.start()                                                      
 print "Waiting for all background processes to finish..."                                                                                                                            
-QCD500proc.join() ; QCD1000proc.join() ; ZjetProc.join() ; WjetProc.join() ; TTjetProc.join()                                                           
-QCD500procSMJ.join() ; QCD1000procSMJ.join() ; ZjetProcSMJ.join() ; WjetProcSMJ.join() ; TTjetProcSMJ.join()                                                           
+QCD500proc.join() ; 
+#QCD1000proc.join() ; ZjetProc.join() ; WjetProc.join() ; TTjetProc.join()                                                           
+#QCD500procSMJ.join() ; QCD1000procSMJ.join() ; ZjetProcSMJ.join() ; WjetProcSMJ.join() ; TTjetProcSMJ.join()                                                           
+
+print referenceCard.bkgYields["QCD500"]
 
 print "Start signal processes"
 sigProcess = []
@@ -152,13 +158,13 @@ for m in range(25,125,100) :
 	myDatacard = datacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 	myDatacard.bkgYields = referenceCard.bkgYields
 	sigProcess.append( target=buildCards , args=( 1025 , m , myDatacards ) )	
-	sigProcess[-1].start()
+	#sigProcess[-1].start()
 	
 	myDatacard = datacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 	myDatacard.bkgYields = referenceCardSMJ.bkgYields
 	sigProcess.append( target=buildCards , args=( 1025 , m , myDatacards ) )	
-	sigProcess[-1].start()
+	#sigProcess[-1].start()
 	
-print "Waiting for all signal processes to finish..."
-for p in sigProcess : 
-	p[-1].join()
+#print "Waiting for all signal processes to finish..."
+#for p in sigProcess : 
+#	p[-1].join()
