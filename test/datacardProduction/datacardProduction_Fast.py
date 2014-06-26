@@ -6,18 +6,18 @@ from gluinoXsec import *
 from multiprocessing import Process
 
 def computeYields(tree , 
-     			binning ,
-				yields , 
-				weight ,
-				sig = False
-				):
+		  binning ,
+		  yields , 
+		  weight ,
+		  sig = False
+		  ):
 
 	for iEvt in range( tree.GetEntries() ) : 
 
 		tree.GetEntry( iEvt )
 
 		if sig : 
-			if tree.Filter_PBNRFilter!=1 and Filter_eeBadScFilter!=1 and Filter_ecalLaserCorrFilter!=1 and Filter_hcalLaserEventFilter!=1 and Filter_ra2EcalBEFilter!=1 and Filter_ra2EcalTPFilter!=1 and Filter_eeNoiseFilter!=1 and Filter_trackingFailureFilter!=1 and Filter_inconsistentMuons!=1 and Filter_greedyMuons!=1 and PATMuonsPFIDIsoNum!=0 and PATElectronsIDIsoNum!=0 :
+			if tree.Filter_PBNRFilter!=1 and tree.Filter_eeBadScFilter!=1 and tree.Filter_ecalLaserCorrFilter!=1 and tree.Filter_hcalLaserEventFilter!=1 and tree.Filter_ra2EcalBEFilter!=1 and tree.Filter_ra2EcalTPFilter!=1 and tree.Filter_eeNoiseFilter!=1 and tree.Filter_trackingFailureFilter!=1 and tree.Filter_inconsistentMuons!=1 and tree.Filter_greedyMuons!=1 and tree.PATMuonsPFIDIsoNum!=0 and tree.PATElectronsIDIsoNum!=0 and tree.DeltaPhi1>.5 and tree.DeltaPhi2>.5 and tree.DeltaPhi3>.3 :
 				continue
 
 		for iBin in range( binning.nBins ): 
@@ -57,12 +57,12 @@ def buildCards( massMom , massDau , datacard ) :
 	#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_25to500_8TeV.root")
 	#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_400to750_mLSP_25to550_8TeV.root")
 	fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_25to500_8TeV"))
-	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_525to875_8TeV"))
+	fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_525to875_8TeV"))
 	#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_25to500_8TeV.root")
 	#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_525to1000_8TeV_V2.root")
 	#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_1025to1200_8TeV.root")
-	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_800to1400_mLSP_1_8TeV"))
-	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_400to750_mLSP_1_8TeV"))
+	fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_800to1400_mLSP_1_8TeV"))
+	fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_400to750_mLSP_1_8TeV"))
 
 	##### signal files for T5VV trees
 	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_800to1100_mLSP_25to525_8TeV"))
@@ -141,24 +141,36 @@ TTjetProcSMJ = Process( target=computeYields , args=( TTjetstree  , referenceCar
 
 QCD500proc.start() ; QCD1000proc.start() ; ZjetProc.start() ; WjetProc.start() ; TTjetProc.start()                                                      
 QCD500procSMJ.start() ; QCD1000procSMJ.start() ; ZjetProcSMJ.start() ; WjetProcSMJ.start() ; TTjetProcSMJ.start()                                                      
-print "Waiting for all background processes to finish..."                                                                                                                            
+
+print "Waiting for all background processes to finish..."
 QCD500proc.join() ; QCD1000proc.join() ; ZjetProc.join() ; WjetProc.join() ; TTjetProc.join()                                                           
 QCD500procSMJ.join() ; QCD1000procSMJ.join() ; ZjetProcSMJ.join() ; WjetProcSMJ.join() ; TTjetProcSMJ.join()                                                           
 
-print "Start signal processes"
 sigProcess = []
-for m in range(25,125,100) :	
+for m in range(25,875,100) :	
 
 	myDatacard = datacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 	myDatacard.bkgYields = referenceCard.bkgYields
-	sigProcess.append( target=buildCards , args=( 1025 , m , myDatacards ) )	
+	sigProcess.append( Process( target=buildCards , args=( 1025 , m , myDatacard ) )	)
 	sigProcess[-1].start()
 	
 	myDatacard = datacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 	myDatacard.bkgYields = referenceCardSMJ.bkgYields
-	sigProcess.append( target=buildCards , args=( 1025 , m , myDatacards ) )	
+	sigProcess.append( Process ( target=buildCards , args=( 1025 , m , myDatacard ) ) )	
+	sigProcess[-1].start()
+
+for m in range(400,1425,100) :	
+
+	myDatacard = datacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
+	myDatacard.bkgYields = referenceCard.bkgYields
+	sigProcess.append( Process( target=buildCards , args=( m , 1 , myDatacard ) )	)
 	sigProcess[-1].start()
 	
+	myDatacard = datacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
+	myDatacard.bkgYields = referenceCardSMJ.bkgYields
+	sigProcess.append( Process ( target=buildCards , args=( m , 1 , myDatacard ) ) )	
+	sigProcess[-1].start()
+
 print "Waiting for all signal processes to finish..."
 for p in sigProcess : 
-	p[-1].join()
+	p.join()
