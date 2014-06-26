@@ -158,12 +158,12 @@ for m in range(25,875,100) :
 
 	myDatacard = datacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 	myDatacard.bkgYields = referenceCard.bkgYields
-	sigProcess.append( target=buildCards , args=( 1025 , m , myDatacard ) )
+	sigProcess.append( Process( target=buildCards , args=( 1025 , m , myDatacard ) ) )
 	#sigProcess[-1].start()
 	
 	myDatacard = datacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 	myDatacard.bkgYields = referenceCardSMJ.bkgYields
-	sigProcess.append( target=buildCards , args=( 1025 , m , myDatacard ) )	
+	sigProcess.append( Process( target=buildCards , args=( 1025 , m , myDatacard ) ) )
 	#sigProcess[-1].start()
 	
 #print "Waiting for all signal processes to finish..."
