@@ -48,8 +48,6 @@ def computeYields(tree ,
 
 def buildCards( massMom , massDau , datacard ) :
 
-	sampleName = "T1tttt"
-
 	fileNames = []
 
 	sigDir = "/eos/uscms/store/user/awhitbe1/RA2nTupleExtension/"
@@ -94,6 +92,8 @@ def buildCards( massMom , massDau , datacard ) :
 		datacard.printDatacard("{3}_mGo{1}_mLSP{2}_datacard_TEST_SMJ_bin{0}.txt".format( i , massMom , massDau , sampleName ),i)
 
 #### -- background stuff -- ####
+
+sampleName = "T1tttt"
 
 bkgDir = "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V5/"
 
