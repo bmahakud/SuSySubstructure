@@ -46,28 +46,7 @@ def computeYields(tree ,
 
 ####### end of getTreeSetAliases()
 
-def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) : 
-
-	bkgDir = "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V5/"
-
-	### background trees
-	QCD500tree = TChain("RA2TreeFiller/AnalysisTree")
-	QCD500tree.Add( bkgDir + "QCD_500HT1000_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
-
-	QCD1000tree = TChain( "RA2TreeFiller/AnalysisTree" )
-	QCD1000tree.Add( bkgDir + "QCD_1000HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
-
-	Wjetstree = TChain( "RA2TreeFiller/AnalysisTree" )
-	Wjetstree.Add( bkgDir + "WJetsToLNu_400HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
-	Wjetstree.Add( bkgDir + "WJetsToLNu_400HTinf_v2_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
-
-	Zjetstree = TChain( "RA2TreeFiller/AnalysisTree" ) 
-	Zjetstree.Add( bkgDir + "ZJetsToNuNu_400HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
-	
-	TTjetstree = TChain( "RA2TreeFilller/AnalysisTree" ) 
-	TTjetstree.Add( bkgDir + "TTJets_SemiLeptMGDecays_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
-
-	#print TTjetstree.Draw("NJets","NJets>7")
+buildCards( massMom , massDau , datacard ) :
 
 	sampleName = "T1tttt"
 
@@ -95,30 +74,10 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 	### signal files for T5tttt trees
 	#fileNames.append(sigDir+"{0}/divided/scan*.root".format(""))
 
+	#print TTjetstree.Draw("NJets","NJets>7")
+
 	treeName = "massMom{0}_massDau{1}".format( massMom , massDau )
 	#treeName = "RA2PreSelection"
-
-	njetBins = binning(["NJets"])
-	njetBins.addBin( [(2,6)] )
-	njetBins.addBin( [(5,8)] ) 
-	njetBins.addBin( [(7,999 )] )
-
-	#myDatacard = datacard( njetBins , ["T1tttt"] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
-	if useSMJ : 
-		myDatacard = datacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
-	else :
-		myDatacard = datacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
-
-	#print "QCD500"
-	computeYields( QCD500tree  , myDatacard.binning , myDatacard.bkgYields["QCD500"]         , 5.582   )
-	#print "QCD1000"
-	computeYields( QCD1000tree , myDatacard.binning , myDatacard.bkgYields["QCD1000"]        , 0.31    )
-	#print "ZinvJets"
-	computeYields( Zjetstree   , myDatacard.binning , myDatacard.bkgYields["ZinvJets"]       , 0.134   )
-	#print "WlvJets"
-	computeYields( Wjetstree   , myDatacard.binning , myDatacard.bkgYields["WlvJets"]        , 0.106   )
-	#print "TTsemiLeptJets"
-	computeYields( TTjetstree  , myDatacard.binning , myDatacard.bkgYields["TTsemiLeptJets"] , 0.082   )
 
 	sigTree = TChain(treeName)
 	for fileName in fileNames :
@@ -126,27 +85,75 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 
 	if sigTree == None or sigTree.GetEntries() <= 0 :
 		#raise InputError("Tree not found! Skipping this point")
-		return 
+		return myDatacard
 
 	#print "T1tttt"
-	computeYields( sigTree , myDatacard.binning , myDatacard.sigYields[sampleName] , xsec[massMom]*19500./sigTree.GetEntries() , True )
-	
-	print myDatacard.binning.nBins
+	computeYields( sigTree , datacard.binning , datacard.sigYields[sampleName] , xsec[massMom]*19500./sigTree.GetEntries() , True )
 
-	for i in range( myDatacard.binning.nBins ) :
-		if useSMJ : 
-			myDatacard.printDatacard("{3}_mGo{1}_mSt{2}_datacard_TEST_SMJ_bin{0}.txt".format( i , massMom , massDau , sampleName ),i)
-		else :
-			myDatacard.printDatacard("{3}_mGo{1}_mSt{2}_datacard_TEST_Classic_bin{0}.txt".format( i , massMom , massDau , sampleName ),i)
+	for i in range( datacard.binning.nBins ) :
+		datacard.printDatacard("{3}_mGo{1}_mLSP{2}_datacard_TEST_SMJ_bin{0}.txt".format( i , massMom , massDau , sampleName ),i)
 
-#for m in range(800,1400,100) :
+#### -- background stuff -- ####
 
-	#buildCards( m , 1 , True)
-	#buildCards( m , 1 , False)
+bkgDir = "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V5/"
 
-for m in range(25,125,100) :
+### background trees
+QCD500tree = TChain("RA2TreeFiller/AnalysisTree")
+QCD500tree.Add( bkgDir + "QCD_500HT1000_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
-	buildCards( 1025 , m , True)
-	buildCards( 1025 , m , False)
+QCD1000tree = TChain( "RA2TreeFiller/AnalysisTree" )
+QCD1000tree.Add( bkgDir + "QCD_1000HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
+Wjetstree = TChain( "RA2TreeFiller/AnalysisTree" )
+Wjetstree.Add( bkgDir + "WJetsToLNu_400HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+Wjetstree.Add( bkgDir + "WJetsToLNu_400HTinf_v2_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
+Zjetstree = TChain( "RA2TreeFiller/AnalysisTree" ) 
+Zjetstree.Add( bkgDir + "ZJetsToNuNu_400HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+
+TTjetstree = TChain( "RA2TreeFilller/AnalysisTree" ) 
+TTjetstree.Add( bkgDir + "TTJets_SemiLeptMGDecays_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+
+referenceCard_SMJ = datacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
+referenceCard = datacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
+
+#print "QCD500"                                                                                                                                                            
+#computeYields( QCD500tree  , myDatacard.binning , myDatacard.bkgYields["QCD500"]         , 5.582   )
+QCD500proc = Process( target=computeYields , args=( QCD500tree  , referenceCard.binning , referenceCard.bkgYields["QCD500"]         , 5.582   ) )
+QCD500procSMJ = Process( target=computeYields , args=( QCD500tree  , referenceCardSMJ.binning , referenceCardSMJ.bkgYields["QCD500"]         , 5.582   ) )
+#print "QCD1000"                                                                                                                                                           
+#computeYields( QCD1000tree , myDatacard.binning , myDatacard.bkgYields["QCD1000"]        , 0.31    )
+QCD1000proc = Process( target=computeYields , args=( QCD1000tree , referenceCard.binning , referenceCard.bkgYields["QCD1000"]        , 0.31    ) )
+QCD1000procSMJ = Process( target=computeYields , args=( QCD1000tree , referenceCardSMJ.binning , referenceCardSMJ.bkgYields["QCD1000"]        , 0.31    ) )
+#print "ZinvJets"                                                                                                                                                          
+#computeYields( Zjetstree   , myDatacard.binning , myDatacard.bkgYields["ZinvJets"]       , 0.134   )
+ZjetProc = Process( target=computeYields , args=( Zjetstree   , referenceCard.binning , referenceCard.bkgYields["ZinvJets"]       , 0.134   ) )
+ZjetProcSMJ = Process( target=computeYields , args=( Zjetstree   , referenceCardSMJ.binning , referenceCardSMJ.bkgYields["ZinvJets"]       , 0.134   ) )
+#print "WlvJets"                                                                                                                                                           
+#computeYields( Wjetstree   , myDatacard.binning , myDatacard.bkgYields["WlvJets"]        , 0.106   )
+WjetProc = Process( target=computeYields , args=( Wjetstree   , referenceCard.binning , referenceCard.bkgYields["WlvJets"]        , 0.106   ) )
+WjetProcSMJ = Process( target=computeYields , args=( Wjetstree   , referenceCardSMJ.binning , referenceCardSMJ.bkgYields["WlvJets"]        , 0.106   ) )
+#print "TTsemiLeptJets"                                                                                                                                                    
+#computeYields( TTjetstree  , myDatacard.binning , myDatacard.bkgYields["TTsemiLeptJets"] , 0.082   )
+TTjetProc = Process( target=computeYields , args=( TTjetstree  , referenceCard.binning , referenceCard.bkgYields["TTsemiLeptJets"] , 0.082   ) )
+TTjetProcSMJ = Process( target=computeYields , args=( TTjetstree  , referenceCardSMJ.binning , referenceCardSMJ.bkgYields["TTsemiLeptJets"] , 0.082   ) )
+
+QCD500proc.start() ; QCD1000proc.start() ; ZjetProc.start() ; WjetProc.start() ; TTjetProc.start()                                                      
+QCD500procSMJ.start() ; QCD1000procSMJ.start() ; ZjetProcSMJ.start() ; WjetProcSMJ.start() ; TTjetProcSMJ.start()                                                      
+print "Waiting for all background processes to finish..."                                                                                                                            
+QCD500proc.join() ; QCD1000proc.join() ; ZjetProc.join() ; WjetProc.join() ; TTjetProc.join()                                                           
+QCD500procSMJ.join() ; QCD1000procSMJ.join() ; ZjetProcSMJ.join() ; WjetProcSMJ.join() ; TTjetProcSMJ.join()                                                           
+
+for m in range(25,125,100) :	
+
+	myDatacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
+	myDatacard.bkgYields = referenceCard.bkgYields
+	sigProcess.append( target=buildCards , args=( 1025 , m , myDatacards ) )	
+	sigProcess[-1].start()
+	sigProcess[-1].join()
+
+	myDatacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
+	myDatacard.bkgYields = referenceCardSMJ.bkgYields
+	sigProcess.append( target=buildCards , args=( 1025 , m , myDatacards ) )	
+	sigProcess[-1].start()
+	sigProcess[-1].join()
