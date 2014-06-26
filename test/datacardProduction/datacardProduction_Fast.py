@@ -124,8 +124,8 @@ referenceCard = datacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "Zin
 
 #print "QCD500"                                                                                                                                                            
 #computeYields( QCD500tree  , referenceCard.binning , referenceCard.bkgYields["QCD500"]         , 5.582   )
-QCD500yields = []
-QCD500yieldsSMJ = []
+QCD500yields = [0]*referenceCard.binning.nBins
+QCD500yieldsSMJ = [0]*referenceCardSMJ.binning.nBins
 QCD500proc = Process( target=computeYields , args=( QCD500tree  , referenceCard.binning , QCD500yields         , 5.582   ) )
 QCD500procSMJ = Process( target=computeYields , args=( QCD500tree  , referenceCardSMJ.binning , QCD500yieldsSMJ         , 5.582   ) )
 #print "QCD1000"                                                                                                                                                           
