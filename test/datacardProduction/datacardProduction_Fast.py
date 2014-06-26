@@ -106,13 +106,13 @@ QCD1000tree = TChain( "RA2TreeFiller/AnalysisTree" )
 QCD1000tree.Add( bkgDir + "QCD_1000HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
 Wjetstree = TChain( "RA2TreeFiller/AnalysisTree" )
-Wjetstree.Add( bkgDir + "WJetsToLNu_400HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
-Wjetstree.Add( bkgDir + "WJetsToLNu_400HTinf_v2_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+Wjetstree.Add( bkgDir + "WJetsToLNu_400HTInf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+Wjetstree.Add( bkgDir + "WJetsToLNu_400HTInf_v2_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
 Zjetstree = TChain( "RA2TreeFiller/AnalysisTree" ) 
 Zjetstree.Add( bkgDir + "ZJetsToNuNu_400HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
-TTjetstree = TChain( "RA2TreeFilller/AnalysisTree" ) 
+TTjetstree = TChain( "RA2TreeFiller/AnalysisTree" ) 
 TTjetstree.Add( bkgDir + "TTJets_SemiLeptMGDecays_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
 referenceCardSMJ = datacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
