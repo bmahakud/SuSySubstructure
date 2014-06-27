@@ -31,7 +31,7 @@ def selectSample(name):
                  "19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_525to875_8TeV",
                  "19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_800to1400_mLSP_1_8TeV"]
 
-    else if name == "T5VV" :
+    elif name == "T5VV" :
 
         samples=["19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_800to1100_mLSP_25to525_8TeV",
                  "19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_800to1100_mLSP_575to875_8TeV",
@@ -41,7 +41,7 @@ def selectSample(name):
                  "19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_1150to1400_mLSP_875to1175_8TeV",
                  "19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_400to750_mLSP_25to525_8TeV"]
         
-    else if name == "T1qqqq" :
+    elif name == "T1qqqq" :
                 
         samples=["19June2013_SignalTree_SMS_MG_T1qqqq_2J_mGo_1050to1100_mLSP_675to1075_8TeV_V2",
                  "19June2013_SignalTree_SMS_MG_T1qqqq_2J_mGo_1150to1400_mLSP_1025to1375_8TeV",
@@ -54,7 +54,7 @@ def selectSample(name):
     else : 
         raise NameError(name)
         samples = []
-        
+
     return samples
                 
 def checkFiles(samList = []) :
