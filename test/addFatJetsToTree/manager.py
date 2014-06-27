@@ -75,7 +75,7 @@ def submitFatJetJobs(samList = []) :
         system("rm "+prePath+"/"+s+"/*root")
         system("rm "+prePath+"/"+s+"/divided/scan*.root")
 
-        system("submitAddFatJetsToTree.py -s "+s)
+        system("python submitAddFatJetsToTree.py -s "+s)
 
 samples = selectSample(options.name)
 
