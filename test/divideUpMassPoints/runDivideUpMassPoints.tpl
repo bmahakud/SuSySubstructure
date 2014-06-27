@@ -14,7 +14,6 @@ echo "-------------------------------------"
 #ls 
 
 python divideUpMassPoints.py -d <DIR> -o <DIR>/divided/ -f <FILE>
-
 echo "------------------------------------"
 echo "FILES ON WORKER NODE AFTER EXECUTION"
 echo "------------------------------------"

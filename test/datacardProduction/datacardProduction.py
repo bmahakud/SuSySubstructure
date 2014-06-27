@@ -3,20 +3,22 @@ from binning import *
 from datacard import *
 from sumJetMassBinning import *
 from gluinoXsec import *
+from multiprocessing import Process
 
 def computeYields(  tree , 
-					binning ,
-					yields , 
-					weight ,
-					sig = False
-				  ) :
+		    binning ,
+		    yields , 
+		    weight ,
+		    sig = False
+		    ) :
 
 	for iBin in range( binning.nBins ): 
 
 		if sig : 
-			cutString = "Filter_PBNRFilter==1 && Filter_eeBadScFilter==1 && Filter_ecalLaserCorrFilter==1 && Filter_hcalLaserEventFilter==1 && Filter_ra2EcalBEFilter==1 && Filter_ra2EcalTPFilter==1 && Filter_eeNoiseFilter==1 && Filter_trackingFailureFilter==1 && Filter_inconsistentMuons==1 && Filter_greedyMuons==1 && PATMuonsPFIDIsoNum == 0 && PATElectronsIDIsoNum==0"
-		else : 
-			cutString = "DeltaPhi1>.5 && DeltaPhi2>.5 && DeltaPhi3>.3"
+			cutString = "Filter_PBNRFilter==1 && Filter_eeBadScFilter==1 && Filter_ecalLaserCorrFilter==1 && Filter_hcalLaserEventFilter==1 && Filter_ra2EcalBEFilter==1 && Filter_ra2EcalTPFilter==1 && Filter_eeNoiseFilter==1 && Filter_trackingFailureFilter==1 && Filter_inconsistentMuons==1 && Filter_greedyMuons==1 && PATMuonsPFIDIsoNum == 0 && PATElectronsIDIsoNum==0 && DeltaPhi1>.5 && DeltaPhi2>.5 && DeltaPhi3>.3"
+		else :
+			cutString = "HT>0"
+
 
 		for i in range( len( binning.branchNames ) ) : 
 
@@ -58,50 +60,62 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 
 	inputDir = "./"
 
+	bkgDir = "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V5/"
+
 	### background trees
-	QCD500file = TFile( "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V4/QCD_500HT1000_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" , "READ" )
-	QCD500tree = QCD500file.Get( "TreeFiller/AnalysisTree" )
-	setAliases( QCD500tree )
-	QCD1000file = TFile( "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V4/QCD_1000HTinf_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" , "READ" )
-	QCD1000tree = QCD1000file.Get( "TreeFiller/AnalysisTree" )
-	setAliases( QCD1000tree )
-	Wjetsfile = TFile( "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V4/WJetsToLNu_HT-400ToInf_8TeV_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" , "READ" )
-	Wjetstree = Wjetsfile.Get( "TreeFiller/AnalysisTree" )
-	setAliases( Wjetstree )
-	Zjetsfile = TFile( "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V4/ZJetsToNuNu_400_HT_inf_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" , "READ" )
-	Zjetstree = Zjetsfile.Get( "TreeFiller/AnalysisTree" )
-	setAliases( Zjetstree )
-	TTjetsfile = TFile( "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V4/TTJets_SemiLeptMGDecays_8TeV_LPCSUSYPAT_SLIM_SumJetMass_AnalysisTree.root" , "READ" )
-	TTjetstree = TTjetsfile.Get( "TreeFiller/AnalysisTree" )
-	setAliases( TTjetstree )
+	QCD500tree = TChain("RA2TreeFiller/AnalysisTree")
+	QCD500tree.Add( bkgDir + "QCD_500HT1000_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+
+	QCD1000tree = TChain( "RA2TreeFiller/AnalysisTree" )
+	QCD1000tree.Add( bkgDir + "QCD_1000HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+
+	Wjetstree = TChain( "RA2TreeFiller/AnalysisTree" )
+	Wjetstree.Add( bkgDir + "WJetsToLNu_400HTInf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+	Wjetstree.Add( bkgDir + "WJetsToLNu_400HTInf_v2_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+
+	Zjetstree = TChain( "RA2TreeFiller/AnalysisTree" )
+	Zjetstree.Add( bkgDir + "ZJetsToNuNu_400HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+
+	TTjetstree = TChain( "RA2TreeFiller/AnalysisTree" )
+	TTjetstree.Add( bkgDir + "TTJets_SemiLeptMGDecays_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+	
 
 	#print TTjetstree.Draw("NJets","NJets>7")
 
-	sampleName = "T5tttt"
+	sampleName = "T1tttt"
 
 	fileNames = []
 
 	sigDir = "/eos/uscms/store/user/awhitbe1/RA2nTupleExtension/"
 
 	### signal files for T1tttt trees
-	#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_25to500_8TeV.root")
-	#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_400to750_mLSP_25to550_8TeV.root")
-	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_25to500_8TeV"))
-	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_525to875_8TeV"))
-	#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_25to500_8TeV.root")
-	#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_525to1000_8TeV_V2.root")
-	#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_1025to1200_8TeV.root")
-	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_800to1400_mLSP_1_8TeV"))
-	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_400to750_mLSP_1_8TeV"))
+	if sampleName == "T1tttt" :
+		#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_25to500_8TeV.root")
+		#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_400to750_mLSP_25to550_8TeV.root")
+		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_25to500_8TeV"))
+		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_525to875_8TeV"))
+		#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_25to500_8TeV.root")
+		#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_525to1000_8TeV_V2.root")
+		#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_1025to1200_8TeV.root")
+		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_800to1400_mLSP_1_8TeV"))
+		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_400to750_mLSP_1_8TeV"))
 
 	##### signal files for T5VV trees
-	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_800to1100_mLSP_25to525_8TeV"))
-	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_800to1100_mLSP_575to875_8TeV"))
-	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_1150to1400_mLSP_25to525_8TeV"))
-	#fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_400to750_mLSP_25to525_8TeV"))
+	if sampleName == "T5VV" : 
+		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_800to1100_mLSP_25to525_8TeV"))
+		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_800to1100_mLSP_575to875_8TeV"))
+		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_1150to1400_mLSP_25to525_8TeV"))
+		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_400to750_mLSP_25to525_8TeV"))
+
+	if sampleName == "T1qqqq" :
+		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1qqqq_2J_mGo_1150to1400_mLSP_25to675_8TeV_V2"))
+       		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1qqqq_2J_mGo_400to750_mLSP_25to725_8TeV_V2"))
+      		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1qqqq_2J_mGo_800to1100_mLSP_25to625_8TeV_V2"))
+		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1qqqq_2J_mGo_800to1100_mLSP_675to1075_8TeV_V2"))
 
 	### signal files for T5tttt trees
-	fileNames.append(sigDir+"{0}/divided/scan*.root".format("29May2014_SignalTree_SMS_MG_T5tttt"))
+	if sampleName == "T5tttt" :
+		fileNames.append(sigDir+"{0}/divided/scan*.root".format("29May2014_SignalTree_SMS_MG_T5tttt"))
 
 	treeName = "massMom{0}_massDau{1}".format( massMom , massDau )
 	#treeName = "RA2PreSelection"
@@ -118,13 +132,13 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 		myDatacard = datacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 
 	#print "QCD500"
-	computeYields( QCD500tree  , myDatacard.binning , myDatacard.bkgYields["QCD500"]         , 6.28   )
+	computeYields( QCD500tree  , myDatacard.binning , myDatacard.bkgYields["QCD500"]         , 5.582   )
 	#print "QCD1000"
-	computeYields( QCD1000tree , myDatacard.binning , myDatacard.bkgYields["QCD1000"]        , 0.316  )
+	computeYields( QCD1000tree , myDatacard.binning , myDatacard.bkgYields["QCD1000"]        , 0.31  )
 	#print "ZinvJets"
-	computeYields( Zjetstree   , myDatacard.binning , myDatacard.bkgYields["ZinvJets"]       , 0.040  )
+	computeYields( Zjetstree   , myDatacard.binning , myDatacard.bkgYields["ZinvJets"]       , 0.134  )
 	#print "WlvJets"
-	computeYields( Wjetstree   , myDatacard.binning , myDatacard.bkgYields["WlvJets"]        , 0.126  )
+	computeYields( Wjetstree   , myDatacard.binning , myDatacard.bkgYields["WlvJets"]        , 0.106  )
 	#print "TTsemiLeptJets"
 	computeYields( TTjetstree  , myDatacard.binning , myDatacard.bkgYields["TTsemiLeptJets"] , 0.082  )
 
@@ -143,18 +157,37 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 
 	for i in range( myDatacard.binning.nBins ) :
 		if useSMJ : 
-			myDatacard.printDatacard("{3}_mGo{1}_mSt{2}_datacard_TEST_SMJ_bin{0}.txt".format( i , massMom , massDau , sampleName ),i)
+			myDatacard.printDatacard("{3}_mGo{1}_mLSP{2}_datacard_TEST_SMJ_bin{0}.txt".format( i , massMom , massDau , sampleName ),i)
 		else :
-			myDatacard.printDatacard("{3}_mGo{1}_mSt{2}_datacard_TEST_Classic_bin{0}.txt".format( i , massMom , massDau , sampleName ),i)
+			myDatacard.printDatacard("{3}_mGo{1}_mLSP{2}_datacard_TEST_Classic_bin{0}.txt".format( i , massMom , massDau , sampleName ),i)
 
-#for m in range(800,1400,100) :
+#for m in range(400,775,100) :
 
-	#buildCards( m , 1 , True)
-	#buildCards( m , 1 , False)
+#	buildCards( m , 1 , True)
+#	buildCards( m , 1 , False)
 
-for m in range(1200,1425,100) :
+processList = []
 
-	buildCards( m , 25 , True)
-	buildCards( m , 25 , False)
+for m in range(25,275,100) :
+
+	buildCards( 1025 , m , True)
+	buildCards( 1025 , m , False)
+
+#buildCards( 775 , 575 , True)
+#buildCards( 775 , 575 , False)
+#buildCards( 875 , 675 , True)
+#buildCards( 875 , 675 , False)
+#buildCards( 975 , 775 , True)
+#buildCards( 975 , 775 , False)
+#buildCards( 1075 , 875 , True)
+#buildCards( 1075 , 875 , False)
+
+	#processList.append( Process( target=buildCards , args=( 1025 , m , True) ) )
+	#processList[-1].start()
+	#processList.append( Process( target=buildCards , args=( 1025 , m , False) ) )
+	#processList[-1].start()
+
+#for p in processList :
+#	p.join()
 
 
