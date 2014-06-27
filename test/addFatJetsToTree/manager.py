@@ -66,7 +66,7 @@ def checkFiles(samList = []) :
 def haddFiles(samList = []) :
 
     for s in samList :
-        system("hadd -f "+prePath+"/"+s+"/divided/"+s+".root "+prePath+"/"+s+"/scan*.root")
+        system("hadd -f "+prePath+"/"+s+"/divided/"+s+".root "+prePath+"/"+s+"/divided/scan*.root")
 
 def submitFatJetJobs(samList = []) :
 

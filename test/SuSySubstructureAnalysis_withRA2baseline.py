@@ -123,6 +123,13 @@ process.GenTreeFiller = cms.EDAnalyzer("GenJetTreeFiller",
                                        debug         = cms.untracked.bool(False)
                                        )
 
+process.RA2TreeFiller = cms.EDAnalyzer("RA2TreeFiller",
+                                    MHTjetCollection = cms.untracked.string("patJetsAK5PFPt30"),
+                                    HTjetCollection = cms.untracked.string("patJetsAK5PFPt50Eta25"),
+                                    pseudoParticleCollection = cms.untracked.string("fattenedJets"),
+                                    debug         = cms.untracked.bool(False)
+                                    )
+
 process.TreeFiller = cms.EDAnalyzer("AnalysisTreeFiller",
                                     jetCollection = cms.untracked.string("patJetsAK5PFPt30:patJetsAK5PFPt50Eta25:ak1p2Jets"),
                                     pseudoParticleCollection = cms.untracked.string("fatJetSubjets:fattenedJets"),
@@ -167,6 +174,7 @@ process.bulkSequence = cms.Sequence(process.ak1p2Jets
                                     *process.fatJetSubjets
                                     *process.Substructure
                                     *process.fattenedJets
+                                    *process.RA2TreeFiller
                                     *process.TreeFiller
                                     *process.genParticlesForJetsNoNu
                                     *process.ak1p2GenJets
