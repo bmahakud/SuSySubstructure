@@ -82,7 +82,7 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 
 	#print TTjetstree.Draw("NJets","NJets>7")
 
-	sampleName = "T1tttt"
+	sampleName = "T5VV"
 
 	fileNames = []
 
@@ -168,10 +168,15 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 
 processList = []
 
-for m in range(25,275,100) :
+for m in range(25,875,100) :
 
-	buildCards( 1025 , m , True)
-	buildCards( 1025 , m , False)
+	buildCards( 1000 , m , True)
+	buildCards( 1000 , m , False)
+
+for m in range(400,1125,100) :
+
+	buildCards( m , 25 , True)
+	buildCards( m , 25 , False)
 
 #buildCards( 775 , 575 , True)
 #buildCards( 775 , 575 , False)
