@@ -4,6 +4,23 @@ from datacard import *
 from sumJetMassBinning import *
 from gluinoXsec import *
 from multiprocessing import Process
+from optparse import OptionParser
+
+parser = OptionParser()
+parser.add_option("-s", "--sample", dest="sample", default = "T1tttt",
+		                      help="sample, must be either T1tttt, T1qqqq, T5VV", metavar="SAMPLE")
+
+parser.add_option("--mGo", dest="mGluino", default = 1025,
+		  help="mass of gluionos", metavar="MGLUINO")
+
+parser.add_option("--mLSP", dest="mLSP", default = 25,
+		  help="mass of LSP", metavar="MLSP")
+
+parser.add_option("--useSMJ", dest="useSMJ", default=False, action = "store_true",
+		  help="if selected the SMJ binning will be used", metavar="SMJ")
+
+(options, args) = parser.parse_args()
+
 
 def computeYields(  tree , 
 		    binning ,
@@ -39,24 +56,7 @@ def computeYields(  tree ,
 
 ####### end of computeYields()
 
-def setAliases( tree ) : 
-
-	tree.SetAlias("HT","Ht_patJetsAK5PFPt50Eta25")
-	tree.SetAlias("MHT","missHt_patJetsAK5PFPt30")
-	tree.SetAlias("NJets","nJets_patJetsAK5PFPt50Eta25")
-	tree.SetAlias("sumJetMass","sumJetMass_fattenedJets")
-	tree.SetAlias("DeltaPhi1","missHtPhi_patJetsAK5PFPt30[0]")
-	tree.SetAlias("DeltaPhi2","missHtPhi_patJetsAK5PFPt30[1]")
-	tree.SetAlias("DeltaPhi3","missHtPhi_patJetsAK5PFPt30[2]")
-
-	#print "events:",tree.GetEntries()
-
-	if tree == None : 
-		raise InputError("datacardProduction - error grabbing tree: "+fileName)
-
-####### end of getTreeSetAliases()
-
-def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) : 
+def buildCards(sampleName = "T5VV" ,  massMom = 1075 , massDau = 125 , useSMJ = False ) : 
 
 	inputDir = "./"
 
@@ -80,10 +80,7 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 	TTjetstree.Add( bkgDir + "TTJets_SemiLeptMGDecays_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 	
 
-	#print TTjetstree.Draw("NJets","NJets>7")
-
-	sampleName = "T5VV"
-
+	#### load signal files
 	fileNames = []
 
 	sigDir = "/eos/uscms/store/user/awhitbe1/RA2nTupleExtension/"
@@ -161,38 +158,14 @@ def buildCards( massMom = 1075 , massDau = 125 , useSMJ = False ) :
 		else :
 			myDatacard.printDatacard("{3}_mGo{1}_mLSP{2}_datacard_TEST_Classic_bin{0}.txt".format( i , massMom , massDau , sampleName ),i)
 
-#for m in range(400,775,100) :
+#########
+# main stuff
+########
+print "signal topology:",options.sample
+print "gluino mass:",options.mGluino
+print "LSP mass:",options.mLSP
+print "using SMJ:",options.useSMJ
 
-#	buildCards( m , 1 , True)
-#	buildCards( m , 1 , False)
-
-processList = []
-
-for m in range(25,875,100) :
-
-	buildCards( 1000 , m , True)
-	buildCards( 1000 , m , False)
-
-for m in range(400,1125,100) :
-
-	buildCards( m , 25 , True)
-	buildCards( m , 25 , False)
-
-#buildCards( 775 , 575 , True)
-#buildCards( 775 , 575 , False)
-#buildCards( 875 , 675 , True)
-#buildCards( 875 , 675 , False)
-#buildCards( 975 , 775 , True)
-#buildCards( 975 , 775 , False)
-#buildCards( 1075 , 875 , True)
-#buildCards( 1075 , 875 , False)
-
-	#processList.append( Process( target=buildCards , args=( 1025 , m , True) ) )
-	#processList[-1].start()
-	#processList.append( Process( target=buildCards , args=( 1025 , m , False) ) )
-	#processList[-1].start()
-
-#for p in processList :
-#	p.join()
+buildCards( options.sample , options.mGluino , options.mLSP , options.useSMJ )
 
 
