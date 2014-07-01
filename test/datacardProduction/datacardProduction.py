@@ -56,7 +56,7 @@ def computeYields(  tree ,
 
 ####### end of computeYields()
 
-def buildCards(sampleName = "T5VV" ,  massMom = 1075 , massDau = 125 , useSMJ = False ) : 
+def buildCards(sampleName = "T1tttt" ,  massMom = 1075 , massDau = 125 , useSMJ = False ) : 
 
 	inputDir = "./"
 
@@ -117,11 +117,6 @@ def buildCards(sampleName = "T5VV" ,  massMom = 1075 , massDau = 125 , useSMJ = 
 	treeName = "massMom{0}_massDau{1}".format( massMom , massDau )
 	#treeName = "RA2PreSelection"
 
-	njetBins = binning(["NJets"])
-	njetBins.addBin( [(2,6)] )
-	njetBins.addBin( [(5,8)] ) 
-	njetBins.addBin( [(7,999 )] )
-
 	#myDatacard = datacard( njetBins , ["T1tttt"] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 	if useSMJ : 
 		myDatacard = datacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
@@ -148,7 +143,7 @@ def buildCards(sampleName = "T5VV" ,  massMom = 1075 , massDau = 125 , useSMJ = 
 		return 
 
 	#print "T1tttt"
-	computeYields( sigTree , myDatacard.binning , myDatacard.sigYields[sampleName] , xsec[massMom]*19500./sigTree.GetEntries() , True )
+	computeYields( sigTree , myDatacard.binning , myDatacard.sigYields[sampleName] , xsec[int(massMom)]*19500./sigTree.GetEntries() , True )
 	
 	print myDatacard.binning.nBins
 
