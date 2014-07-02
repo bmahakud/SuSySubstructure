@@ -2,6 +2,7 @@ from ROOT import TFile, TTree, TChain
 from binning import *
 from datacard import *
 from sumJetMassBinning import *
+from extendedSumJetMassBinning import *
 from gluinoXsec import *
 from multiprocessing import Process
 from optparse import OptionParser
@@ -16,8 +17,8 @@ parser.add_option("--mGo", dest="mGluino", default = 1025,
 parser.add_option("--mLSP", dest="mLSP", default = 25,
 		  help="mass of LSP", metavar="MLSP")
 
-parser.add_option("--useSMJ", dest="useSMJ", default=False, action = "store_true",
-		  help="if selected the SMJ binning will be used", metavar="SMJ")
+parser.add_option("--binning", dest="binning", default="Classic",
+		  help="Select binning to be used: Classic, SMJ, extSMJ", metavar="binning")
 
 (options, args) = parser.parse_args()
 
@@ -56,72 +57,78 @@ def computeYields(  tree ,
 
 ####### end of computeYields()
 
-def buildCards(sampleName = "T1tttt" ,  massMom = 1075 , massDau = 125 , useSMJ = False ) : 
+def buildCards(sampleName = "T1tttt" ,  massMom = 1075 , massDau = 125 , binning = "Classic" ) : 
+
+        #myDatacard = datacard( njetBins , ["T1tttt"] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
+	if binning == "SMJ" : 
+		myDatacard = datacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
+	elif binning == "Classic" :
+		myDatacard = datacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
+	elif binning == "extSMJ" :
+		myDatacard = datacard( extRA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
+	else :
+		raise NameError(binning)
+	        return 
+
 
 	inputDir = "./"
 
-	bkgDir = "/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V5/"
+	accessProtocol = "root://cmsxrootd-site.fnal.gov//store/user/"
+	bkgDir = "awhitbe1/SuSySubstructureAnalysisNtuples_V5/"
 
 	### background trees
 	QCD500tree = TChain("RA2TreeFiller/AnalysisTree")
-	QCD500tree.Add( bkgDir + "QCD_500HT1000_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+	QCD500tree.Add( accessProtocol + bkgDir + "QCD_500HT1000_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
 	QCD1000tree = TChain( "RA2TreeFiller/AnalysisTree" )
-	QCD1000tree.Add( bkgDir + "QCD_1000HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+	QCD1000tree.Add( accessProtocol + bkgDir + "QCD_1000HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
 	Wjetstree = TChain( "RA2TreeFiller/AnalysisTree" )
-	Wjetstree.Add( bkgDir + "WJetsToLNu_400HTInf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
-	Wjetstree.Add( bkgDir + "WJetsToLNu_400HTInf_v2_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+	Wjetstree.Add( accessProtocol + bkgDir + "WJetsToLNu_400HTInf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+	Wjetstree.Add( accessProtocol + bkgDir + "WJetsToLNu_400HTInf_v2_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
 	Zjetstree = TChain( "RA2TreeFiller/AnalysisTree" )
-	Zjetstree.Add( bkgDir + "ZJetsToNuNu_400HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+	Zjetstree.Add( accessProtocol + bkgDir + "ZJetsToNuNu_400HTinf_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 
 	TTjetstree = TChain( "RA2TreeFiller/AnalysisTree" )
-	TTjetstree.Add( bkgDir + "TTJets_SemiLeptMGDecays_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
+	TTjetstree.Add( accessProtocol + bkgDir + "TTJets_SemiLeptMGDecays_LPCSUSYPAT_SLIM_ALL_SumJetMass_AnalysisTree.root" )
 	
 
 	#### load signal files
 	fileNames = []
 
-	sigDir = "/eos/uscms/store/user/awhitbe1/RA2nTupleExtension/"
+	sigDir = "awhitbe1/RA2nTupleExtension/"
 
 	### signal files for T1tttt trees
 	if sampleName == "T1tttt" :
-		#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_25to500_8TeV.root")
-		#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_400to750_mLSP_25to550_8TeV.root")
-		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_25to500_8TeV"))
-		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_525to875_8TeV"))
-		#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_25to500_8TeV.root")
-		#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_525to1000_8TeV_V2.root")
-		#fileNames.append(sigDir+"19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_1025to1200_8TeV.root")
-		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_800to1400_mLSP_1_8TeV"))
-		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_400to750_mLSP_1_8TeV"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_400to750_mLSP_25to550_8TeV"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_25to500_8TeV"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_775to1075_mLSP_525to875_8TeV"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_25to500_8TeV"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_525to1000_8TeV_V2"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_1100to1400_mLSP_1025to1200_8TeV"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_800to1400_mLSP_1_8TeV"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1tttt_2J_mGo_400to750_mLSP_1_8TeV"))
 
 	##### signal files for T5VV trees
 	if sampleName == "T5VV" : 
-		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_800to1100_mLSP_25to525_8TeV"))
-		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_800to1100_mLSP_575to875_8TeV"))
-		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_1150to1400_mLSP_25to525_8TeV"))
-		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_400to750_mLSP_25to525_8TeV"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_800to1100_mLSP_25to525_8TeV"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_800to1100_mLSP_575to875_8TeV"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_1150to1400_mLSP_25to525_8TeV"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T5VV_2J_mGo_400to750_mLSP_25to525_8TeV"))
 
 	if sampleName == "T1qqqq" :
-		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1qqqq_2J_mGo_1150to1400_mLSP_25to675_8TeV_V2"))
-       		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1qqqq_2J_mGo_400to750_mLSP_25to725_8TeV_V2"))
-      		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1qqqq_2J_mGo_800to1100_mLSP_25to625_8TeV_V2"))
-		fileNames.append(sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1qqqq_2J_mGo_800to1100_mLSP_675to1075_8TeV_V2"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1qqqq_2J_mGo_1150to1400_mLSP_25to675_8TeV_V2"))
+       		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1qqqq_2J_mGo_400to750_mLSP_25to725_8TeV_V2"))
+      		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1qqqq_2J_mGo_800to1100_mLSP_25to625_8TeV_V2"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/{0}.root".format("19June2013_SignalTree_SMS_MG_T1qqqq_2J_mGo_800to1100_mLSP_675to1075_8TeV_V2"))
 
 	### signal files for T5tttt trees
 	if sampleName == "T5tttt" :
-		fileNames.append(sigDir+"{0}/divided/scan*.root".format("29May2014_SignalTree_SMS_MG_T5tttt"))
+		fileNames.append(accessProtocol + sigDir+"{0}/divided/scan*.root".format("29May2014_SignalTree_SMS_MG_T5tttt"))
 
 	treeName = "massMom{0}_massDau{1}".format( massMom , massDau )
 	#treeName = "RA2PreSelection"
-
-	#myDatacard = datacard( njetBins , ["T1tttt"] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
-	if useSMJ : 
-		myDatacard = datacard( SMJbins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
-	else :
-		myDatacard = datacard( RA2bins , [sampleName] , [ "QCD500" , "QCD1000" , "ZinvJets" , "WlvJets" , "TTsemiLeptJets" ] )
 
 	#print "QCD500"
 	computeYields( QCD500tree  , myDatacard.binning , myDatacard.bkgYields["QCD500"]         , 5.582   )
@@ -148,10 +155,12 @@ def buildCards(sampleName = "T1tttt" ,  massMom = 1075 , massDau = 125 , useSMJ 
 	print myDatacard.binning.nBins
 
 	for i in range( myDatacard.binning.nBins ) :
-		if useSMJ : 
+		if binning == "SMJ" : 
 			myDatacard.printDatacard("{3}_mGo{1}_mLSP{2}_datacard_TEST_SMJ_bin{0}.txt".format( i , massMom , massDau , sampleName ),i)
-		else :
+		elif binning == "Classic" :
 			myDatacard.printDatacard("{3}_mGo{1}_mLSP{2}_datacard_TEST_Classic_bin{0}.txt".format( i , massMom , massDau , sampleName ),i)
+		elif binning == "extSMJ" :
+			myDatacard.printDatacard("{3}_mGo{1}_mLSP{2}_datacard_TEST_extRA2_bin{0}.txt".format( i , massMom , massDau , sampleName ),i)
 
 #########
 # main stuff
@@ -159,8 +168,8 @@ def buildCards(sampleName = "T1tttt" ,  massMom = 1075 , massDau = 125 , useSMJ 
 print "signal topology:",options.sample
 print "gluino mass:",options.mGluino
 print "LSP mass:",options.mLSP
-print "using SMJ:",options.useSMJ
+print "binning:",options.binning
 
-buildCards( options.sample , options.mGluino , options.mLSP , options.useSMJ )
+buildCards( options.sample , options.mGluino , options.mLSP , options.binning )
 
 
