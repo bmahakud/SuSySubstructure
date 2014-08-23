@@ -39,6 +39,8 @@
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Utilities/interface/InputTag.h"
+#include "DataFormats/Common/interface/ValueMap.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -52,10 +54,24 @@
 #include "TLorentzVector.h"
 #include "TTree.h"    
 
+
+#include <DataFormats/PatCandidates/interface/Photon.h>
+#include <DataFormats/PatCandidates/interface/Electron.h>
+#include <DataFormats/EgammaCandidates/interface/GsfElectron.h>
+#include <DataFormats/RecoCandidate/interface/IsoDeposit.h>
+#include "DataFormats/EgammaCandidates/interface/Conversion.h"
+#include "DataFormats/EgammaCandidates/interface/ConversionFwd.h"
+#include "RecoEgamma/EgammaTools/interface/ConversionTools.h"
+#include "SandBox/Skims/plugins/ElectronEffectiveArea.h"
+
+#include <DataFormats/PatCandidates/interface/MET.h>
 #include <DataFormats/PatCandidates/interface/Jet.h>
 #include <DataFormats/PatCandidates/interface/Muon.h>
 #include <DataFormats/PatCandidates/interface/CompositeCandidate.h>
 #include <DataFormats/ParticleFlowCandidate/interface/PFCandidate.h>
+
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
 
 #include <SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h>
 
@@ -64,6 +80,8 @@
 #include <fastjet/JetDefinition.hh>
 
 #include "SubjetCounting.hh"
+
+#include "GSFelectronInterface.h"
 
 #include <vector>
 
@@ -83,26 +101,57 @@ private:
   
   TTree* AnalysisTree;
 
-  TH1F*  Ht_histo;
-  TH1F*  met_histo;
+  TH1F*  HT_histo;
+  TH1F*  MHT_histo;
   TH1F*  sumJetMass_histo;
 
-  TH2F*  Ht_vs_met_histo;
-  TH2F*  Ht_vs_sumJetMass_histo;
-  TH2F*  sumJetMass_vs_met_histo;
+  TH2F*  HT_vs_MHT_histo;
+  TH2F*  HT_vs_sumJetMass_histo;
+  TH2F*  sumJetMass_vs_MHT_histo;
+  TH2F*  HT_vs_met_histo;
+  
+  int event, run, lumi;
 
+  double MET ; 
+  double METsig ; 
+
+  std::vector< double > muonPt;
+  std::vector< double > muonEta;
+  std::vector< double > muonPhi;
+  std::vector< double > muonE;
+  std::vector< double > muonRelIso;
+  std::vector< bool >   muonPassID;
+
+  int NMuons;
+
+  std::vector< double > electronPt;
+  std::vector< double > electronEta;
+  std::vector< double > electronPhi;
+  std::vector< double > electronE;
+  std::vector< double > electronRelIso;
+  std::vector< bool >   electronPassID;
+
+  int NElectrons;
+
+  std::vector< double > photonPt;
+  std::vector< double > photonEta;
+  std::vector< double > photonPhi;
+  std::vector< double > photonE;
+
+  int NPhotons;
+ 
   struct jetKinematics {
 
     std::vector< double > pt;
     std::vector< double > eta;
     std::vector< double > mass;
     std::vector< double > phi;  
-    int nJets;
+    int NJets;
     double sumJetMass;
-    double missHt;
-    double missHtPhi;
-    double Ht;
-
+    double MHT;
+    double MHTphi;
+    double HT;
+  
   };
 
   std::vector< jetKinematics* > jetKin ;
@@ -117,6 +166,16 @@ private:
   std::string pseudoParticleCollection;    // name of jet collection
   std::vector < std::string > jetCollectionList ; // parsed jet collections
   std::vector < std::string > pseudoParticleCollectionList ; // parsed jet collections
+  edm::InputTag METcollection ; // MET collection
+  edm::InputTag muonCollection ; // muon collection
+  edm::InputTag photonCollection ; // photon collection
+  edm::InputTag electronCollection ; // electron collection
+  edm::InputTag conversionsSrc ; // conversions collection
+  edm::InputTag vtxSrc ; // primary vertex collection
+  edm::InputTag beamSpotSrc ; // beam spot collection
+  edm::InputTag rhoIsoSrc ; // rho corrections
+  std::vector< edm::InputTag > isoValsSrc ; // electrons isolations
+
   bool debug;
 
   // ---------- private methods! -----------
@@ -139,6 +198,15 @@ private:
 AnalysisTreeFiller::AnalysisTreeFiller(const edm::ParameterSet& iConfig):
   jetCollection(iConfig.getUntrackedParameter<std::string>("jetCollection","patJetsAK5PFPt30")),
   pseudoParticleCollection(iConfig.getUntrackedParameter<std::string>("pseudoParticleCollection","fatjetSubjets")),
+  METcollection(iConfig.getUntrackedParameter<edm::InputTag>("METcollection")),    // pfMet , patMETsPF, mhtPF
+  muonCollection(iConfig.getUntrackedParameter<edm::InputTag>("muonCollection")),  //patMuonsPFID
+  photonCollection(iConfig.getUntrackedParameter<edm::InputTag>("photonCollection")), //patPhotonsRA2
+  electronCollection(iConfig.getUntrackedParameter<edm::InputTag>("electronCollection")), // gsfElectron or patElectronsID
+  conversionsSrc(iConfig.getParameter<edm::InputTag>("ConversionsSource")), // allConversions
+  vtxSrc(iConfig.getParameter<edm::InputTag>("VertexSource")),              // goodVertices
+  beamSpotSrc(iConfig.getParameter<edm::InputTag>("BeamSpotSource")),       // offlineBeamSpot
+  rhoIsoSrc(iConfig.getParameter<edm::InputTag>("RhoIsoSource")),           // kt6PFJets , rho
+  isoValsSrc(iConfig.getParameter<std::vector<edm::InputTag> >("IsoValInputTags")),  //elPFIsoValueCharged03PFIdPFIso, elPFIsoValueGamma03PFIdPFIso, elPFIsoValueNeutral03PFIdPFIso
   debug(iConfig.getUntrackedParameter<bool>("debug",false))
 {
 
@@ -146,16 +214,47 @@ AnalysisTreeFiller::AnalysisTreeFiller(const edm::ParameterSet& iConfig):
 
   AnalysisTree            = fs->make<TTree>("AnalysisTree","AnalysisTree");
 
+  // set branches
+  // --------------------------
+
+  AnalysisTree->Branch("event",&event);
+  AnalysisTree->Branch("run",&run);
+  AnalysisTree->Branch("lumi",&lumi);
+
+  AnalysisTree->Branch("MET",&MET);
+  AnalysisTree->Branch("METsig",&METsig);
+
+  AnalysisTree->Branch("electronPt",&electronPt);
+  AnalysisTree->Branch("electronEta",&electronEta);
+  AnalysisTree->Branch("electronPhi",&electronPhi);
+  AnalysisTree->Branch("electronE",&electronE);
+  AnalysisTree->Branch("electronsRelIso",&electronRelIso);
+  AnalysisTree->Branch("electronPassID",&electronPassID);
+  AnalysisTree->Branch("NElectrons",&NElectrons);
+
+  AnalysisTree->Branch("muonPt",&muonPt);
+  AnalysisTree->Branch("muonEta",&muonEta);
+  AnalysisTree->Branch("muonPhi",&muonPhi);
+  AnalysisTree->Branch("muonE",&muonE);
+  AnalysisTree->Branch("muonRelIso",&muonRelIso);
+  AnalysisTree->Branch("muonPassID",&muonPassID);
+  AnalysisTree->Branch("NMuons",&NMuons);
+
+  AnalysisTree->Branch("photonPt",&photonPt);
+  AnalysisTree->Branch("photonEta",&photonEta);
+  AnalysisTree->Branch("photonPhi",&photonPhi);
+  AnalysisTree->Branch("photonE",&photonE);
+
   // NOTE: histograms will only be filled for the last jet collection!
   // -----------------------------------------------------------------
-  Ht_histo                = fs->make<TH1F >("Ht_histo","H_{T} [GeV]",400,0,2000);
-  met_histo               = fs->make<TH1F >("met_histo","missing H_{T} [GeV]",400,0,2000);
+  HT_histo                = fs->make<TH1F >("HT_histo","H_{T} [GeV]",400,0,2000);
+  MHT_histo               = fs->make<TH1F >("MET_histo","missing H_{T} [GeV]",400,0,2000);
   sumJetMass_histo        = fs->make<TH1F >("sumJetMass_histo","#Sigma m_{j} [GeV]",400,0,2000);
 
-  Ht_vs_met_histo         = fs->make<TH2F >("Ht_vs_met_histo",";H_{T} [GeV];missing H_{T} [GeV]",400,0,2000,400,0,2000);
-  Ht_vs_sumJetMass_histo  = fs->make<TH2F >("Ht_vs_sumJetMass_histo",";H_{T} [GeV];#Sigma m_{j} [GeV]",400,0,2000,400,0,2000);
-  sumJetMass_vs_met_histo = fs->make<TH2F >("sumJetMass_vs_met_histo",";#Sigma m_{j} [GeV];missing H_{T} [GeV]",400,0,2000,400,0,2000);
-
+  HT_vs_met_histo         = fs->make<TH2F >("HT_vs_MHT_histo",";H_{T} [GeV];missing H_{T} [GeV]",400,0,2000,400,0,2000);
+  HT_vs_sumJetMass_histo  = fs->make<TH2F >("HT_vs_sumJetMass_histo",";H_{T} [GeV];#Sigma m_{j} [GeV]",400,0,2000,400,0,2000);
+  sumJetMass_vs_MHT_histo = fs->make<TH2F >("sumJetMass_vs_MHT_histo",";#Sigma m_{j} [GeV];missing H_{T} [GeV]",400,0,2000,400,0,2000);
+  
   // parse list of jet collections to analyze
   parseString( jetCollectionList, jetCollection ) ;
   // parse list of pseudo particle collections to analyze
@@ -228,7 +327,152 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     eventWeight = genEventInfo->weight();
 
   }
+
+  // MET
+  // ===========================
+  // for more information on MET stuff:
+  // https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMetAnalysis
+  // http://cmslxr.fnal.gov/lxr/source/DataFormats/PatCandidates/interface/MET.h
+  // http://cmslxr.fnal.gov/lxr/source/DataFormats/METReco/interface/MET.h
+  /*
+  //scalar sum of transverse energy over all objects
+  double sumEt() const { return sumet; }
+  //MET Significance = MET / std::sqrt(SumET)
+  double mEtSig() const { return ( sumet ? (this->et() / std::sqrt(sumet)) : (0.0) ); }
+  //real MET significance
+  double significance() const;
+  //longitudinal component of the vector sum of energy over all object
+  //(useful for data quality monitoring)
+  double e_longitudinal() const {return elongit; }
+  */
   // ---------------------------
+  
+  Handle< View< pat::MET > >  metCand;
+  iEvent.getByLabel( METcollection , metCand );
+
+  for(View<pat::MET>::const_iterator met = metCand->begin();
+        met != metCand->end();
+        ++met){
+
+    if( debug ){
+      std::cout << "MET:" << met->sumEt() << std::endl;
+      std::cout << "MET significance: " << met->significance() << std::endl;
+    }
+
+    MET = met->sumEt();
+    METsig = met->significance();
+
+    break;
+
+  }
+
+  // Muons
+  // ===========================
+  // ---------------------------
+  // should be using muon collection which has ID requirements 
+  // already applied.
+  // referencing the RA2 selector:
+  // https://github.com/awhitbeck/RA2/blob/master/SandBox/Skims/plugins/GoodMuonSelector.cc
+
+  Handle< View<pat::Muon> > muonCands;
+  iEvent.getByLabel( muonCollection ,muonCands);
+
+  muonPt.clear();
+  muonEta.clear();
+  muonPhi.clear();
+  muonE.clear();
+  muonPassID.clear();
+  muonRelIso.clear();
+  NMuons = 0;
+
+  edm::Handle< std::vector<reco::Vertex> > vertices;
+  iEvent.getByLabel(vtxSrc, vertices);
+  reco::Vertex::Point vtxpos = (vertices->size() > 0 ? (*vertices)[0].position() : reco::Vertex::Point());
+
+  for(View<pat::Muon>::const_iterator iMuon = muonCands->begin();
+        iMuon != muonCands->end();
+        ++iMuon){
+
+    //if( iMuon->pt() < 10. || fabs( iMuon->eta() ) > 2.4 ) continue ;
+
+    muonPt.push_back( iMuon->pt() );
+    muonEta.push_back( iMuon->eta() ); 
+    muonPhi.push_back( iMuon->phi() );
+    muonE.push_back( iMuon->energy() );
+    
+    muonRelIso.push_back( (iMuon->pfIsolationR04().sumChargedHadronPt + std::max(0., iMuon->pfIsolationR04().sumNeutralHadronEt + iMuon->pfIsolationR04().sumPhotonEt - 0.5*iMuon->pfIsolationR04().sumPUPt) )/ iMuon->pt() );
+
+    bool pass = false;
+
+    if( !iMuon->isPFMuon() || 
+        iMuon->globalTrack()->normalizedChi2() >= 10. ||
+        iMuon->globalTrack()->hitPattern().numberOfValidMuonHits() <= 0 ||
+        iMuon->numberOfMatchedStations() <=1 ||
+        iMuon->innerTrack()->hitPattern().numberOfValidPixelHits() == 0 ||
+        iMuon->innerTrack()->hitPattern().trackerLayersWithMeasurement() <=5 ||
+        std::abs(iMuon->innerTrack()->dxy(vtxpos)) >= 0.2 && vertices->size() > 0 ||
+        std::abs(iMuon->innerTrack()->dz(vtxpos))  >= 0.5 && vertices->size() > 0 ) pass = false;
+    else pass = true;
+
+    muonPassID.push_back(pass);
+
+    NMuons++;
+    
+  }
+
+  // Photon
+  // ===========================
+  // ---------------------------
+  /*
+  Handle< View<pat::Photon> > photonCands;
+  iEvent.getByLabel( photonCollection ,photonCands);
+
+  for(View<pat::Photon>::const_iterator iPhoton = photonCands->begin();
+        iPhoton != photonCands->end();
+        ++iPhoton){
+
+    photonPt.push_back( iPhoton->pt() );
+    photonEta.push_back( iPhoton->eta() ); 
+    photonPhi.push_back( iPhoton->phi() );
+    photonE.push_back( iPhoton->energy() );
+    NPhotons++;
+    
+  }
+  */
+
+  // Electrons
+  // ===========================
+  // ---------------------------
+
+  // get electrons
+  Handle< std::vector< reco::GsfElectron> > electronCands;
+  iEvent.getByLabel( electronCollection ,electronCands);
+
+  GSFelectronInterface eleTool( electronCollection , conversionsSrc , vtxSrc , beamSpotSrc , rhoIsoSrc , isoValsSrc ) ; 
+
+  electronPt.clear();
+  electronEta.clear();
+  electronPhi.clear();
+  electronE.clear();
+  electronRelIso.clear();
+  electronPassID.clear();
+
+  NElectrons = 0 ;
+
+  for(unsigned int i = 0 ; i < electronCands->size(); ++i){
+  
+    electronData myEle = eleTool.passIDandISO( iEvent , i ) ;
+
+   
+    electronPt.push_back( myEle.pt );
+    electronEta.push_back( myEle.eta ); 
+    electronPhi.push_back( myEle.phi );
+    electronE.push_back( myEle.e );
+    electronRelIso.push_back( myEle.combIso );
+    electronPassID.push_back( myEle.passID );
+    NElectrons++;
+    
+  }
 
   // start section where jet collections will be looped over!!
   // ===================
@@ -272,7 +516,7 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
         jetKin[ iJetColl ]->phi.push_back (   iJet->phi()  );
         jetKin[ iJetColl ]->mass.push_back(   iJet->mass() );
 
-        jetKin[ iJetColl ]->Ht  += iJet->pt();
+        jetKin[ iJetColl ]->HT  += iJet->pt();
 
         negativePx_pt30        -= iJet->px();
         negativePy_pt30        -= iJet->py();
@@ -281,21 +525,21 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
     } // end loop over iJet
 
-    jetKin[ iJetColl ]->missHt   = sqrt( pow( negativePx_pt30 , 2 ) + pow( negativePy_pt30 , 2 ) ) ;
+    jetKin[ iJetColl ]->MHT   = sqrt( pow( negativePx_pt30 , 2 ) + pow( negativePy_pt30 , 2 ) ) ;
 
-    jetKin[ iJetColl ]->missHtPhi = acos( negativePx_pt30 / jetKin[ iJetColl ]->missHt ) ;
+    jetKin[ iJetColl ]->MHTphi = acos( negativePx_pt30 / jetKin[ iJetColl ]->MHT ) ;
 
-    jetKin[ iJetColl ]->nJets    = jetKin[ iJetColl ]->pt.size() ;
+    jetKin[ iJetColl ]->NJets    = jetKin[ iJetColl ]->pt.size() ;
 
   } // end loop over jet collection list
 
-    Ht_histo->Fill( jetKin[ jetKin.size() - 1 ]->Ht );
-    met_histo->Fill( jetKin[ jetKin.size() - 1 ]->missHt );
+    HT_histo->Fill( jetKin[ jetKin.size() - 1 ]->HT );
+    MHT_histo->Fill( jetKin[ jetKin.size() - 1 ]->MHT );
     sumJetMass_histo->Fill( jetKin[ jetKin.size() - 1 ]->sumJetMass );
 
-    Ht_vs_met_histo->Fill( jetKin[ jetKin.size() - 1 ]->Ht, jetKin[ jetKin.size() - 1 ]->missHt );
-    Ht_vs_sumJetMass_histo->Fill( jetKin[ jetKin.size() - 1 ]->Ht, jetKin[ jetKin.size() - 1 ]->sumJetMass );
-    sumJetMass_vs_met_histo->Fill( jetKin[ jetKin.size() - 1 ]->sumJetMass, jetKin[ jetKin.size() - 1 ]->missHt );
+    HT_vs_met_histo->Fill( jetKin[ jetKin.size() - 1 ]->HT, jetKin[ jetKin.size() - 1 ]->MHT );
+    HT_vs_sumJetMass_histo->Fill( jetKin[ jetKin.size() - 1 ]->HT, jetKin[ jetKin.size() - 1 ]->sumJetMass );
+    sumJetMass_vs_MHT_histo->Fill( jetKin[ jetKin.size() - 1 ]->sumJetMass, jetKin[ jetKin.size() - 1 ]->MHT );
 
  for ( unsigned int iParticleColl = 0 ; iParticleColl < pseudoParticleCollectionList.size() ; iParticleColl++ ){
 
@@ -334,7 +578,7 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
         particleKin[ iParticleColl ]->phi.push_back (   p4.phi()  );
         particleKin[ iParticleColl ]->mass.push_back(   p4.mass() );
 
-        particleKin[ iParticleColl ]->Ht  += p4.pt();
+        particleKin[ iParticleColl ]->HT  += p4.pt();
 
         negativePx_pt30        -= p4.px();
         negativePy_pt30        -= p4.py();
@@ -343,11 +587,11 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
     } // end loop over iParticle
 
-    particleKin[ iParticleColl ]->missHt    = sqrt( pow( negativePx_pt30 , 2 ) + pow( negativePy_pt30 , 2 ) ) ;
+    particleKin[ iParticleColl ]->MHT    = sqrt( pow( negativePx_pt30 , 2 ) + pow( negativePy_pt30 , 2 ) ) ;
 
-    particleKin[ iParticleColl ]->missHtPhi = acos( negativePx_pt30 / particleKin[ iParticleColl ]->missHt ) ;
+    particleKin[ iParticleColl ]->MHTphi = acos( negativePx_pt30 / particleKin[ iParticleColl ]->MHT ) ;
 
-    particleKin[ iParticleColl ]->nJets     = particleKin[ iParticleColl ]->pt.size();
+    particleKin[ iParticleColl ]->NJets     = particleKin[ iParticleColl ]->pt.size();
 
 
   } // end loop over jet collection list
@@ -374,11 +618,11 @@ void AnalysisTreeFiller::zeroJetKinematics(jetKinematics& jetKin){
   if( jetKin.phi.size() > 0 )
     jetKin.phi.clear();
 
-  jetKin.nJets      = 0. ;
+  jetKin.NJets      = 0. ;
   jetKin.sumJetMass = 0. ;
-  jetKin.missHt     = 0. ;
-  jetKin.missHtPhi  = 0. ;
-  jetKin.Ht         = 0. ;
+  jetKin.MHT     = 0. ;
+  jetKin.MHTphi  = 0. ;
+  jetKin.HT         = 0. ;
 
   if( debug ){
 
@@ -398,25 +642,25 @@ void AnalysisTreeFiller::addJetKinToTree(jetKinematics& jetKin, TString tag, TTr
   tree.Branch( "mass_" + tag, &jetKin.mass);
   tree.Branch( "phi_" + tag,  &jetKin.phi);
   
-  TString branchName  = "nJets_" + tag ; 
-  TString branchTitle = "nJets_" + tag + "/I" ;   
-  tree.Branch( branchName.Data() ,      &jetKin.nJets , branchTitle.Data() );
+  TString branchName  = "NJets_" + tag ; 
+  TString branchTitle = "NJets_" + tag + "/I" ;   
+  tree.Branch( branchName.Data() ,      &jetKin.NJets , branchTitle.Data() );
   
   branchName  = "sumJetMass_" + tag ; 
   branchTitle = "sumJetMass_" + tag + "/D" ;   
   tree.Branch( branchName.Data() , &jetKin.sumJetMass , branchTitle.Data() );
   
-  branchName  = "missHt_" + tag ; 
-  branchTitle = "missHt_" + tag + "/D" ;   
-  tree.Branch( branchName.Data() ,     &jetKin.missHt , branchTitle.Data() );
+  branchName  = "MHT_" + tag ; 
+  branchTitle = "MHT_" + tag + "/D" ;   
+  tree.Branch( branchName.Data() ,     &jetKin.MHT , branchTitle.Data() );
   
-  branchName  = "missHtPhi_" + tag ;
-  branchTitle = "missHtPhi_" + tag + "/D" ;   
-  tree.Branch( branchName.Data() ,     &jetKin.missHtPhi , branchTitle.Data() );
+  branchName  = "MHTphi_" + tag ;
+  branchTitle = "MHTphi_" + tag + "/D" ;   
+  tree.Branch( branchName.Data() ,     &jetKin.MHTphi , branchTitle.Data() );
   
-  branchName  = "Ht_" + tag ;
-  branchTitle = "Ht_" + tag + "/D" ;   
-  tree.Branch( branchName.Data() ,         &jetKin.Ht , branchTitle.Data() );
+  branchName  = "HT_" + tag ;
+  branchTitle = "HT_" + tag + "/D" ;   
+  tree.Branch( branchName.Data() ,         &jetKin.HT , branchTitle.Data() );
 
   if( debug )
     std::cout << "AnalysisTreeFiller::addJetKinToTree - done " << std::endl;

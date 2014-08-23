@@ -27,6 +27,9 @@ process.AllHadronicFilter = cms.EDFilter("AllHadronicGenFilter")
 
 # RA2 Baseline selections
 
+#process.load('SandBox.Skims.electronSelector_cfi')
+#process.electronSelector.Debug = True
+
 process.load('AWhitbeck.SuSySubstructure.RA2analysis_cff')
 process.mhtFilter.MinMHT = options.minMHT
 process.htFilter.MinHT = options.minHT
@@ -75,7 +78,24 @@ process.ak1p2Jets = ak5PFJets.clone(src = cms.InputTag("pfNoPileUpIsoPF"),
                                     trimPtFracMin = cms.double(0.05),
                                     useExplicitGhosts = cms.bool(False)
                                     )
-    
+
+#######################
+# PHOTON STUFF
+#######################
+process.load("PhysicsTools.PatAlgos.selectionLayer1.photonSelector_cfi")
+
+photonIDCutLoose  = cms.string('et > 50.0 && (abs(eta) < 1.4442 || (abs(eta) > 1.566 && abs(eta) < 2.5)) &&'
+                               'hadronicOverEm < 0.5  && userInt("passElectronConvVeto") > 0 && '
+                               'hadTowOverEm < userFloat("hadTowOverEmLooseCut") && '
+                               'sigmaIetaIeta < userFloat("showerShapeLooseCut")'
+                               )
+
+process.patPhotonsID = cms.EDFilter(
+    "PATPhotonSelector",
+    src = cms.InputTag('patPhotonsRA2'),
+    cut = photonIDCutLoose,
+    filter = cms.bool(False),
+    )
 
 # Produce subjet collection
 
@@ -133,6 +153,17 @@ process.RA2TreeFiller = cms.EDAnalyzer("RA2TreeFiller",
 process.TreeFiller = cms.EDAnalyzer("AnalysisTreeFiller",
                                     jetCollection = cms.untracked.string("patJetsAK5PFPt30:patJetsAK5PFPt50Eta25:ak1p2Jets"),
                                     pseudoParticleCollection = cms.untracked.string("fatJetSubjets:fattenedJets"),
+                                    METcollection = cms.untracked.InputTag("patMETsPF"),
+                                    muonCollection = cms.untracked.InputTag("patMuonsPFID"),
+                                    electronCollection = cms.untracked.InputTag("gsfElectrons"),
+                                    photonCollection = cms.untracked.InputTag("patPhotonsRA2"),
+                                    ConversionsSource = cms.InputTag("allConversions"),
+                                    VertexSource = cms.InputTag("goodVertices"),
+                                    BeamSpotSource = cms.InputTag("offlineBeamSpot"),
+                                    RhoIsoSource = cms.InputTag("kt6PFJets","rho"),
+                                    IsoValInputTags = cms.VInputTag(cms.InputTag('elPFIsoValueCharged03PFIdPFIso'),
+                                                                    cms.InputTag('elPFIsoValueGamma03PFIdPFIso'),
+                                                                    cms.InputTag('elPFIsoValueNeutral03PFIdPFIso')),
                                     debug         = cms.untracked.bool(False)
                                     )
 
@@ -175,7 +206,9 @@ process.bulkSequence = cms.Sequence(process.ak1p2Jets
                                     *process.Substructure
                                     *process.fattenedJets
                                     *process.RA2TreeFiller
+                                    #*process.patPhotonsID
                                     *process.TreeFiller
+                                    #*process.electronSelector
                                     *process.genParticlesForJetsNoNu
                                     *process.ak1p2GenJets
                                     *process.SubstructureGenJets
