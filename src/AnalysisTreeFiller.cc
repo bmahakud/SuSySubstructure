@@ -350,16 +350,16 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   Handle< View< pat::MET > >  metCand;
   iEvent.getByLabel( METcollection , metCand );
 
-  for(View<pat::MET>::const_iterator met = metCand->begin();
+  for( View<pat::MET>::const_iterator met = metCand->begin();
         met != metCand->end();
         ++met){
 
     if( debug ){
-      std::cout << "MET:" << met->sumEt() << std::endl;
+      std::cout << "MET:" << met->pt() << std::endl;
       std::cout << "MET significance: " << met->significance() << std::endl;
     }
 
-    MET = met->sumEt();
+    MET = met->pt();
     METsig = met->significance();
 
     break;
