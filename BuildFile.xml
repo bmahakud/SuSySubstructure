@@ -5,6 +5,8 @@
 <use name="DataFormats/ParticleFlowReco"/>
 <use name="DataFormats/PatCandidates"/>
 <use name="DataFormats/JetReco"/>
+<use name="EGamma/EGammaAnalysisTools"/>
+<use name="DataFormats/Common"/>
 <use name="fastjet"/>
 <use name="ktjet"/>
 <use name="CommonTools/UtilAlgos"/>

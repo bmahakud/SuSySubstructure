@@ -62,11 +62,11 @@ for iJob in range( nJobs ) :
             list += ',"'+process.source.fileNames[iFile+iJob*int( options.nFiles )]+'"'
 
     # replace placeholders in .tpl files
-    os.system("sed -e 's|<SAMPLE>|"+options.filesConfig+"|g' -e 's|<FILELIST>|"+list+"|g' -e 's|<INDEX>|"+str(iJob)+"|g' < run.tpl > run_"+str(iJob)+".sh")
-    os.system("sed -e 's|<INDEX>|"+str(iJob)+"|g' < condor_submit.tpl > condor_submit_"+str(iJob))
+    os.system("sed -e 's|<SAMPLE>|"+options.filesConfig+"|g' -e 's|<FILELIST>|"+list+"|g' -e 's|<INDEX>|"+str(iJob)+"|g' < run.tpl > run_"+options.filesConfig+"_"+str(iJob)+".sh")
+    os.system("sed -e 's|<INDEX>|"+str(iJob)+"|g' -e 's|<JOBNAME>|"+options.filesConfig+"|g' -e 's|<PROXY>|'`voms-proxy-info -path`'|g'< condor_submit.tpl > condor_submit_"+options.filesConfig+"_"+str(iJob))
 
     # submit jobs to condor, if -s was specified
     if ( options.submit ) :
-        os.system("condor_submit condor_submit_"+str(iJob))
+        os.system("condor_submit condor_submit_"+options.filesConfig+"_"+str(iJob))
     
 
