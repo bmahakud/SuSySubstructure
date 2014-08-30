@@ -20,7 +20,7 @@ print "filesConfig: ",options.filesConfig
 print "submit: ",options.submit
 
 # clean up
-os.system("rm condor_submit_* run_*")
+os.system("rm condor_submit_"+options.filesConfig+"_* run_"+options.filesConfig+"_*")
 
 # grab full file list from config files
 import FWCore.ParameterSet.Config as cms
@@ -62,7 +62,7 @@ for iJob in range( nJobs ) :
             list += ',"'+process.source.fileNames[iFile+iJob*int( options.nFiles )]+'"'
 
     # replace placeholders in .tpl files
-    os.system("sed -e 's|<SAMPLE>|"+options.filesConfig+"|g' -e 's|<FILELIST>|"+list+"|g' -e 's|<INDEX>|"+str(iJob)+"|g' < run.tpl > run_"+options.filesConfig+"_"+str(iJob)+".sh")
+    os.system("sed -e 's|<CMSSW_BASE>|'$CMSSW_BASE'|g' -e 's|<SAMPLE>|"+options.filesConfig+"|g' -e 's|<FILELIST>|"+list+"|g' -e 's|<INDEX>|"+str(iJob)+"|g' < run.tpl > run_"+options.filesConfig+"_"+str(iJob)+".sh")
     os.system("sed -e 's|<INDEX>|"+str(iJob)+"|g' -e 's|<JOBNAME>|"+options.filesConfig+"|g' -e 's|<PROXY>|'`voms-proxy-info -path`'|g'< condor_submit.tpl > condor_submit_"+options.filesConfig+"_"+str(iJob))
 
     # submit jobs to condor, if -s was specified

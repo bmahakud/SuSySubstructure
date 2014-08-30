@@ -3,7 +3,7 @@ Executable            = run_<JOBNAME>_<INDEX>.sh
 x509userproxy = <PROXY>
 Requirements          = Memory >= 199 &&OpSys == "LINUX"&& (Arch != "DUMMY" )&& Disk > 1000000
 Should_Transfer_Files = YES
-transfer_input_files=../SuSySubstructureAnalysis.py,../commandLineParameters.py
+transfer_input_files=../SuSySubstructureAnalysis_withRA2baseline.py,../commandLineParameters.py
 WhenToTransferOutput  = ON_EXIT_OR_EVICT
 Output = out_<JOBNAME>_$(Cluster).stdout
 Error  = out_<JOBNAME>_$(Cluster).stderr
