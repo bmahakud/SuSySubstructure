@@ -112,6 +112,8 @@ private:
   
   int event, run, lumi;
 
+  int nVrtx ; 
+
   double MET ; 
   double METsig ; 
 
@@ -137,7 +139,13 @@ private:
   std::vector< double > photonEta;
   std::vector< double > photonPhi;
   std::vector< double > photonE;
-
+  std::vector< double > photon_hadTowOverEm;
+  std::vector< double > photon_sigmaIetaIeta;
+  std::vector< double > photon_pfChargedIso;
+  std::vector< double > photon_pfNeutralIso;
+  std::vector< double > photon_pfGammaIso;
+  std::vector< bool >   photon_passElectronConvVeto;
+  
   int NPhotons;
  
   struct jetKinematics {
@@ -174,7 +182,8 @@ private:
   edm::InputTag vtxSrc ; // primary vertex collection
   edm::InputTag beamSpotSrc ; // beam spot collection
   edm::InputTag rhoIsoSrc ; // rho corrections
-  std::vector< edm::InputTag > isoValsSrc ; // electrons isolations
+  std::vector< edm::InputTag > elIsoValsSrc ; // electrons isolations
+  std::vector< edm::InputTag > phIsoValsSrc ; // photon isolations
 
   bool debug;
 
@@ -206,7 +215,8 @@ AnalysisTreeFiller::AnalysisTreeFiller(const edm::ParameterSet& iConfig):
   vtxSrc(iConfig.getParameter<edm::InputTag>("VertexSource")),              // goodVertices
   beamSpotSrc(iConfig.getParameter<edm::InputTag>("BeamSpotSource")),       // offlineBeamSpot
   rhoIsoSrc(iConfig.getParameter<edm::InputTag>("RhoIsoSource")),           // kt6PFJets , rho
-  isoValsSrc(iConfig.getParameter<std::vector<edm::InputTag> >("IsoValInputTags")),  //elPFIsoValueCharged03PFIdPFIso, elPFIsoValueGamma03PFIdPFIso, elPFIsoValueNeutral03PFIdPFIso
+  elIsoValsSrc(iConfig.getParameter<std::vector<edm::InputTag> >("EleIsoValInputTags")),  //elPFIsoValueCharged03PFIdPFIso, elPFIsoValueGamma03PFIdPFIso, elPFIsoValueNeutral03PFIdPFIso
+  phIsoValsSrc(iConfig.getParameter<std::vector<edm::InputTag> >("PhotonIsoValInputTags")),  //phPFIsoValueCharged03PFIdPFIso, phPFIsoValueGamma03PFIdPFIso, phPFIsoValueNeutral03PFIdPFIso
   debug(iConfig.getUntrackedParameter<bool>("debug",false))
 {
 
@@ -221,6 +231,8 @@ AnalysisTreeFiller::AnalysisTreeFiller(const edm::ParameterSet& iConfig):
   AnalysisTree->Branch("run",&run);
   AnalysisTree->Branch("lumi",&lumi);
 
+  AnalysisTree->Branch( "nVrtx" , &nVrtx ) ;
+  
   AnalysisTree->Branch("MET",&MET);
   AnalysisTree->Branch("METsig",&METsig);
 
@@ -244,6 +256,14 @@ AnalysisTreeFiller::AnalysisTreeFiller(const edm::ParameterSet& iConfig):
   AnalysisTree->Branch("photonEta",&photonEta);
   AnalysisTree->Branch("photonPhi",&photonPhi);
   AnalysisTree->Branch("photonE",&photonE);
+  AnalysisTree->Branch("photon_hadTowOverEm",&photon_hadTowOverEm);  
+  AnalysisTree->Branch("photon_sigmaIetaIeta",&photon_sigmaIetaIeta);
+  AnalysisTree->Branch("photon_pfChargedIso",&photon_pfChargedIso);
+  AnalysisTree->Branch("photon_pfNeutralIso",&photon_pfNeutralIso);
+  AnalysisTree->Branch("photon_pfGammaIso",&photon_pfGammaIso);
+  AnalysisTree->Branch("photon_passElectronConvVeto",&photon_passElectronConvVeto);
+
+  int NPhotons;
 
   // NOTE: histograms will only be filled for the last jet collection!
   // -----------------------------------------------------------------
@@ -328,6 +348,12 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
   }
 
+  edm::Handle< std::vector<reco::Vertex> > vertices;
+  iEvent.getByLabel(vtxSrc, vertices);
+  nVrtx = vertices->size() ;
+
+  reco::Vertex::Point vtxpos = (vertices->size() > 0 ? (*vertices)[0].position() : reco::Vertex::Point());
+
   // MET
   // ===========================
   // for more information on MET stuff:
@@ -385,9 +411,6 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   muonRelIso.clear();
   NMuons = 0;
 
-  edm::Handle< std::vector<reco::Vertex> > vertices;
-  iEvent.getByLabel(vtxSrc, vertices);
-  reco::Vertex::Point vtxpos = (vertices->size() > 0 ? (*vertices)[0].position() : reco::Vertex::Point());
 
   for(View<pat::Muon>::const_iterator iMuon = muonCands->begin();
         iMuon != muonCands->end();
@@ -403,19 +426,23 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     muonRelIso.push_back( (iMuon->pfIsolationR04().sumChargedHadronPt + std::max(0., iMuon->pfIsolationR04().sumNeutralHadronEt + iMuon->pfIsolationR04().sumPhotonEt - 0.5*iMuon->pfIsolationR04().sumPUPt) )/ iMuon->pt() );
 
     bool pass = false;
+    
+    if( iMuon->globalTrack().isNonnull() ){
 
-    if( !iMuon->isPFMuon() || 
-        iMuon->globalTrack()->normalizedChi2() >= 10. ||
-        iMuon->globalTrack()->hitPattern().numberOfValidMuonHits() <= 0 ||
-        iMuon->numberOfMatchedStations() <=1 ||
-        iMuon->innerTrack()->hitPattern().numberOfValidPixelHits() == 0 ||
-        iMuon->innerTrack()->hitPattern().trackerLayersWithMeasurement() <=5 ||
-        std::abs(iMuon->innerTrack()->dxy(vtxpos)) >= 0.2 && vertices->size() > 0 ||
-        std::abs(iMuon->innerTrack()->dz(vtxpos))  >= 0.5 && vertices->size() > 0 ) pass = false;
-    else pass = true;
+      if( !iMuon->isPFMuon()  || 
+	  iMuon->globalTrack()->normalizedChi2() >= 10. ||
+	  iMuon->globalTrack()->hitPattern().numberOfValidMuonHits() <= 0 ||
+	  iMuon->numberOfMatchedStations() <=1 ||
+	  iMuon->innerTrack()->hitPattern().numberOfValidPixelHits() == 0 ||
+	  iMuon->innerTrack()->hitPattern().trackerLayersWithMeasurement() <=5 ||
+	  std::abs(iMuon->innerTrack()->dxy(vtxpos)) >= 0.2 && vertices->size() > 0 ||
+	  std::abs(iMuon->innerTrack()->dz(vtxpos))  >= 0.5 && vertices->size() > 0 ) pass = false;
+      else pass = true;
+      
+    }
 
     muonPassID.push_back(pass);
-
+    
     NMuons++;
     
   }
@@ -424,10 +451,18 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   // ===========================
   // ---------------------------
   /*
-  Handle< View<pat::Photon> > photonCands;
+  "photon_hadTowOverEm",&photon_hadTowOverEm);  
+  "photon_sigmaIetaIeta",&photon_sigmaIetaIeta);
+  "photon_pfChargedIso",&photon_pfChargedIso);
+  "photon_pfNeutralIso",&photon_pfNeutralIso);
+  "photon_pfGammaIso",&photon_pfGammaIso);
+  "photon_passElectronConvVeto",&photon_passElectronConvVeto);
+  */
+
+  Handle< View< pat::Photon> > photonCands;
   iEvent.getByLabel( photonCollection ,photonCands);
 
-  for(View<pat::Photon>::const_iterator iPhoton = photonCands->begin();
+  for( View< pat::Photon >::const_iterator iPhoton = photonCands->begin();
         iPhoton != photonCands->end();
         ++iPhoton){
 
@@ -435,10 +470,25 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     photonEta.push_back( iPhoton->eta() ); 
     photonPhi.push_back( iPhoton->phi() );
     photonE.push_back( iPhoton->energy() );
-    NPhotons++;
     
+    photon_hadTowOverEm.push_back( iPhoton->hadTowOverEm() ) ;
+    photon_sigmaIetaIeta.push_back( iPhoton->sigmaIetaIeta() ) ;
+
+    // iso deposits
+    IsoDepositVals isoVals(phIsoValsSrc.size());
+    for (size_t j = 0; j < phIsoValsSrc.size(); ++j) {
+      iEvent.getByLabel(phIsoValsSrc[j], isoVals[j]);
+    }
+
+    photon_pfChargedIso.push_back(   (*(isoVals)[0])[ iPhoton->photonCore() ] ) ;
+    photon_pfGammaIso.push_back(     (*(isoVals)[1])[ iPhoton->photonCore() ] ) ;
+    photon_pfNeutralIso.push_back(   (*(isoVals)[2])[ iPhoton->photonCore() ] ) ;
+
+    photon_passElectronConvVeto.push_back( iPhoton->userFloat("passElectronConvVeto") ) ;    
+
+    NPhotons++;
+
   }
-  */
 
   // Electrons
   // ===========================
@@ -448,7 +498,7 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   Handle< std::vector< reco::GsfElectron> > electronCands;
   iEvent.getByLabel( electronCollection ,electronCands);
 
-  GSFelectronInterface eleTool( electronCollection , conversionsSrc , vtxSrc , beamSpotSrc , rhoIsoSrc , isoValsSrc ) ; 
+  GSFelectronInterface eleTool( electronCollection , conversionsSrc , vtxSrc , beamSpotSrc , rhoIsoSrc , elIsoValsSrc ) ; 
 
   electronPt.clear();
   electronEta.clear();
