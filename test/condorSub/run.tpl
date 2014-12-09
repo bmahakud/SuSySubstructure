@@ -9,5 +9,6 @@ cd <CMSSW_BASE>
 eval `scram runtime -sh`
 cd -
 
-cmsRun SuSySubstructureAnalysis_withRA2baseline.py outputFile=<SAMPLE>_<INDEX> applySUSYfilter=False files=<FILELIST>
+#cmsRun miniAOD_test.py outputFile=/eos/uscms/store/user/awhitbe1/13TeVGJetsStudies/<SAMPLE>_<INDEX> files=<FILELIST>
+cmsRun fatJetStudies.py outputFile=/eos/uscms/store/user/awhitbe1/SuSySubstructureAnalysisNtuples_V11/<SAMPLE>_<INDEX> files=<FILELIST>
 

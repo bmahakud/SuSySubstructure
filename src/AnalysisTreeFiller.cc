@@ -62,7 +62,7 @@
 #include "DataFormats/EgammaCandidates/interface/Conversion.h"
 #include "DataFormats/EgammaCandidates/interface/ConversionFwd.h"
 #include "RecoEgamma/EgammaTools/interface/ConversionTools.h"
-#include "SandBox/Skims/plugins/ElectronEffectiveArea.h"
+//#include "SandBox/Skims/plugins/ElectronEffectiveArea.h"
 
 #include <DataFormats/PatCandidates/interface/MET.h>
 #include <DataFormats/PatCandidates/interface/Jet.h>
@@ -81,7 +81,7 @@
 
 #include "SubjetCounting.hh"
 
-#include "GSFelectronInterface.h"
+//#include "GSFelectronInterface.h"
 
 #include <vector>
 
@@ -111,11 +111,18 @@ private:
   TH2F*  HT_vs_met_histo;
   
   int event, run, lumi;
+  
+  double fixedGridRhoFastjetAll, fixedGridRhoFastjetAllCalo, fixedGridRhoFastjetCentralCalo, fixedGridRhoFastjetCentralChargedPileUp, fixedGridRhoFastjetCentralNeutral;
 
   int nVrtx ; 
 
   double MET ; 
   double METsig ; 
+
+  std::vector< double > genMuonPt;
+  std::vector< double > genMuonEta;
+  std::vector< double > genMuonPhi;
+  std::vector< double > genMuonE;
 
   std::vector< double > muonPt;
   std::vector< double > muonEta;
@@ -126,25 +133,49 @@ private:
 
   int NMuons;
 
+  std::vector< double > genElectronPt;
+  std::vector< double > genElectronEta;
+  std::vector< double > genElectronPhi;
+  std::vector< double > genElectronE;
+
+  std::vector< double > genParPt;
+  std::vector< double > genParEta;
+  std::vector< double > genParPhi;
+  std::vector< double > genParE;
+  std::vector< double > genParPDGid;
+  std::vector< double > genParStatus;
+  
   std::vector< double > electronPt;
   std::vector< double > electronEta;
   std::vector< double > electronPhi;
   std::vector< double > electronE;
-  std::vector< double > electronRelIso;
-  std::vector< bool >   electronPassID;
+  std::vector< double > electronNeutralIso;
+  std::vector< double > electronChargedIso;
+  std::vector< double > electronPhotonIso;
 
   int NElectrons;
+
+  std::vector< double > genPhotonPt;
+  std::vector< double > genPhotonEta;
+  std::vector< double > genPhotonPhi;
+  std::vector< double > genPhotonE;
 
   std::vector< double > photonPt;
   std::vector< double > photonEta;
   std::vector< double > photonPhi;
   std::vector< double > photonE;
+  std::vector< double > photon_isEB;
+  std::vector< double > photon_genMatched;
   std::vector< double > photon_hadTowOverEm;
   std::vector< double > photon_sigmaIetaIeta;
   std::vector< double > photon_pfChargedIso;
   std::vector< double > photon_pfNeutralIso;
   std::vector< double > photon_pfGammaIso;
+  std::vector< double > photon_ConeDR03ecalEtIso;
+  std::vector< double > photon_ConeDR03hcalEtIso;
+  std::vector< double > photon_ConeDR03trkPtIso;
   std::vector< bool >   photon_passElectronConvVeto;
+  std::vector< bool >   photon_hasPixelSeed;
   
   int NPhotons;
  
@@ -231,18 +262,35 @@ AnalysisTreeFiller::AnalysisTreeFiller(const edm::ParameterSet& iConfig):
   AnalysisTree->Branch("run",&run);
   AnalysisTree->Branch("lumi",&lumi);
 
+  AnalysisTree->Branch( "fixedGridRhoFastjetAll", &fixedGridRhoFastjetAll ) ;
+  AnalysisTree->Branch( "fixedGridRhoFastjetAllCalo", &fixedGridRhoFastjetAllCalo ) ;
+  AnalysisTree->Branch( "fixedGridRhoFastjetCentralCalo", &fixedGridRhoFastjetCentralCalo ) ;
+  AnalysisTree->Branch( "fixedGridRhoFastjetCentralChargedPileUp", &fixedGridRhoFastjetCentralChargedPileUp ) ;
+  AnalysisTree->Branch( "fixedGridRhoFastjetCentralNeutral", &fixedGridRhoFastjetCentralNeutral ) ;
+
   AnalysisTree->Branch( "nVrtx" , &nVrtx ) ;
   
   AnalysisTree->Branch("MET",&MET);
   AnalysisTree->Branch("METsig",&METsig);
 
+  AnalysisTree->Branch("genElectronPt",&genElectronPt);
+  AnalysisTree->Branch("genElectronEta",&genElectronEta);
+  AnalysisTree->Branch("genElectronPhi",&genElectronPhi);
+  AnalysisTree->Branch("genElectronE",&genElectronE);
+
   AnalysisTree->Branch("electronPt",&electronPt);
   AnalysisTree->Branch("electronEta",&electronEta);
   AnalysisTree->Branch("electronPhi",&electronPhi);
   AnalysisTree->Branch("electronE",&electronE);
-  AnalysisTree->Branch("electronsRelIso",&electronRelIso);
-  AnalysisTree->Branch("electronPassID",&electronPassID);
+  AnalysisTree->Branch("electronNeutralIso",&electronNeutralIso);
+  AnalysisTree->Branch("electronChargedIso",&electronChargedIso);
+  AnalysisTree->Branch("electronPhotonIso",&electronPhotonIso);
   AnalysisTree->Branch("NElectrons",&NElectrons);
+
+  AnalysisTree->Branch("genMuonPt",&genMuonPt);
+  AnalysisTree->Branch("genMuonEta",&genMuonEta);
+  AnalysisTree->Branch("genMuonPhi",&genMuonPhi);
+  AnalysisTree->Branch("genMuonE",&genMuonE);
 
   AnalysisTree->Branch("muonPt",&muonPt);
   AnalysisTree->Branch("muonEta",&muonEta);
@@ -252,18 +300,34 @@ AnalysisTreeFiller::AnalysisTreeFiller(const edm::ParameterSet& iConfig):
   AnalysisTree->Branch("muonPassID",&muonPassID);
   AnalysisTree->Branch("NMuons",&NMuons);
 
+  AnalysisTree->Branch("genPhotonPt",&genPhotonPt);
+  AnalysisTree->Branch("genPhotonEta",&genPhotonEta);
+  AnalysisTree->Branch("genPhotonPhi",&genPhotonPhi);
+  AnalysisTree->Branch("genPhotonE",&genPhotonE);
+
+  AnalysisTree->Branch("genParPt",&genParPt);
+  AnalysisTree->Branch("genParEta",&genParEta);
+  AnalysisTree->Branch("genParPhi",&genParPhi);
+  AnalysisTree->Branch("genParE",&genParE);
+  AnalysisTree->Branch("genParPDGid",&genParPDGid);
+  AnalysisTree->Branch("genParStatus",&genParStatus);
+
   AnalysisTree->Branch("photonPt",&photonPt);
   AnalysisTree->Branch("photonEta",&photonEta);
   AnalysisTree->Branch("photonPhi",&photonPhi);
   AnalysisTree->Branch("photonE",&photonE);
+  AnalysisTree->Branch("photon_isEB",&photon_isEB);
+  AnalysisTree->Branch("photon_genMatched",&photon_genMatched);
   AnalysisTree->Branch("photon_hadTowOverEm",&photon_hadTowOverEm);  
   AnalysisTree->Branch("photon_sigmaIetaIeta",&photon_sigmaIetaIeta);
   AnalysisTree->Branch("photon_pfChargedIso",&photon_pfChargedIso);
   AnalysisTree->Branch("photon_pfNeutralIso",&photon_pfNeutralIso);
   AnalysisTree->Branch("photon_pfGammaIso",&photon_pfGammaIso);
+  AnalysisTree->Branch("photon_ConeDR03ecalEtIso",&photon_ConeDR03ecalEtIso);
+  AnalysisTree->Branch("photon_ConeDR03hcalEtIso",&photon_ConeDR03hcalEtIso);
+  AnalysisTree->Branch("photon_ConeDR03trkPtIso" ,&photon_ConeDR03trkPtIso );
   AnalysisTree->Branch("photon_passElectronConvVeto",&photon_passElectronConvVeto);
-
-  int NPhotons;
+  AnalysisTree->Branch("photon_hasPixelSeed",&photon_hasPixelSeed);
 
   // NOTE: histograms will only be filled for the last jet collection!
   // -----------------------------------------------------------------
@@ -297,6 +361,7 @@ AnalysisTreeFiller::AnalysisTreeFiller(const edm::ParameterSet& iConfig):
     addJetKinToTree( *jetKin[ iJetColl ], jetCollectionList[ iJetColl ], *AnalysisTree );
 
   }
+
  // add branches for saving particle kinematics for each pseudo particle collection
   for( unsigned int iParticleColl = 0 ; iParticleColl < pseudoParticleCollectionList.size() ; iParticleColl++ ){
     particleKin.push_back( new jetKinematics() );
@@ -334,6 +399,167 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
   using namespace edm;
 
+  genMuonPt.clear();
+  genMuonEta.clear();
+  genMuonPhi.clear();
+  genMuonE.clear();
+
+  genElectronPt.clear();
+  genElectronEta.clear();
+  genElectronPhi.clear();
+  genElectronE.clear();
+
+  genPhotonPt.clear();
+  genPhotonEta.clear();
+  genPhotonPhi.clear();
+  genPhotonE.clear();
+
+  genParPt.clear();
+  genParEta.clear();
+  genParPhi.clear();
+  genParE.clear();
+  genParPDGid.clear();
+  genParStatus.clear();
+
+  std::vector<int> pdgIdOfInterest;
+  pdgIdOfInterest.push_back(21);
+  pdgIdOfInterest.push_back(22);
+  pdgIdOfInterest.push_back(23);
+  pdgIdOfInterest.push_back(24);
+  pdgIdOfInterest.push_back(25);
+
+  pdgIdOfInterest.push_back(1);
+  pdgIdOfInterest.push_back(2);
+  pdgIdOfInterest.push_back(3);
+  pdgIdOfInterest.push_back(4);
+  pdgIdOfInterest.push_back(5);
+  pdgIdOfInterest.push_back(6);
+
+  pdgIdOfInterest.push_back(11);
+  pdgIdOfInterest.push_back(12);
+  pdgIdOfInterest.push_back(13);
+  pdgIdOfInterest.push_back(14);
+  pdgIdOfInterest.push_back(15);
+  pdgIdOfInterest.push_back(16);
+
+  pdgIdOfInterest.push_back(1000021);
+  pdgIdOfInterest.push_back(1000022);
+  pdgIdOfInterest.push_back(1000023);
+  pdgIdOfInterest.push_back(1000025);
+  pdgIdOfInterest.push_back(1000035);
+
+  pdgIdOfInterest.push_back(1000001);
+  pdgIdOfInterest.push_back(1000002);
+  pdgIdOfInterest.push_back(1000003);
+  pdgIdOfInterest.push_back(1000004);
+  pdgIdOfInterest.push_back(1000005);
+  pdgIdOfInterest.push_back(1000006);
+
+  pdgIdOfInterest.push_back(2000001);
+  pdgIdOfInterest.push_back(2000002);
+  pdgIdOfInterest.push_back(2000003);
+  pdgIdOfInterest.push_back(2000004);
+  pdgIdOfInterest.push_back(2000005);
+  pdgIdOfInterest.push_back(2000006);
+
+  Handle< View<reco::Candidate> > genPartCands;
+  iEvent.getByLabel( "packedGenParticles" ,genPartCands);
+
+  for(View<reco::Candidate>::const_iterator iPart = genPartCands->begin();
+        iPart != genPartCands->end();
+        ++iPart){
+
+    if( iPart->pdgId() == 1000022 ){
+   
+      //cout << "gen particle: " << iPart->pdgId() << " status: " << iPart->status() << endl;
+      //cout << "pt: " << iPart->pt() << " eta: " << iPart->eta() << " phi: " << iPart->phi() << " energy: " << iPart->energy() << endl;
+
+      genParPt.push_back( iPart->pt() );
+      genParEta.push_back( iPart->eta() );
+      genParPhi.push_back( iPart->phi() );
+      genParE.push_back( iPart->energy() );
+
+      genParPDGid.push_back( iPart->pdgId() );
+      genParStatus.push_back( iPart->status() );
+
+    }
+
+  }
+
+  iEvent.getByLabel( "prunedGenParticles" ,genPartCands);
+
+  for(View<reco::Candidate>::const_iterator iPart = genPartCands->begin();
+        iPart != genPartCands->end();
+        ++iPart){
+
+    if( std::find( pdgIdOfInterest.begin(), pdgIdOfInterest.end(), abs(iPart->pdgId()) ) != pdgIdOfInterest.end() && abs( iPart->status() ) >20 && abs( iPart->status() ) <30 ){
+            
+      genParPt.push_back( iPart->pt() );
+      genParEta.push_back( iPart->eta() );
+      genParPhi.push_back( iPart->phi() );
+      genParE.push_back( iPart->energy() );
+
+      genParPDGid.push_back( iPart->pdgId() );
+      genParStatus.push_back( iPart->status() );
+
+    }
+    
+    if( abs( iPart->pdgId() ) == 23 && abs(iPart->status()) > 20 && abs(iPart->status()) < 30){ 
+
+      if( debug )
+	std::cout << "found Z, status: " << iPart->status() << std::endl;
+
+      // check to see that Z decays to muons
+      if( abs( iPart->daughter(0)->pdgId() ) == 13 &&
+	  abs( iPart->daughter(1)->pdgId() ) == 13 ){
+
+	genMuonPt.push_back( iPart->daughter(0)->pt() );
+	genMuonEta.push_back( iPart->daughter(0)->eta() );
+	genMuonPhi.push_back( iPart->daughter(0)->phi() );
+	genMuonE.push_back( iPart->daughter(0)->energy() );
+	
+	genMuonPt.push_back( iPart->daughter(1)->pt() );
+	genMuonEta.push_back( iPart->daughter(1)->eta() );
+	genMuonPhi.push_back( iPart->daughter(1)->phi() );
+	genMuonE.push_back( iPart->daughter(1)->energy() );
+	
+      }// end of muonic z decay...
+
+      // check to see that Z decays to muons
+      if( abs( iPart->daughter(0)->pdgId() ) == 11 &&
+	  abs( iPart->daughter(1)->pdgId() ) == 11 ){
+
+	genElectronPt.push_back( iPart->daughter(0)->pt() );
+	genElectronEta.push_back( iPart->daughter(0)->eta() );
+	genElectronPhi.push_back( iPart->daughter(0)->phi() );
+	genElectronE.push_back( iPart->daughter(0)->energy() );
+	
+	genElectronPt.push_back( iPart->daughter(1)->pt() );
+	genElectronEta.push_back( iPart->daughter(1)->eta() );
+	genElectronPhi.push_back( iPart->daughter(1)->phi() );
+	genElectronE.push_back( iPart->daughter(1)->energy() );
+	
+      }// end of electronic z decay...
+
+    }// end Z stuff
+
+    if( abs( iPart->pdgId() ) == 22 && abs(iPart->status()) > 20 && abs(iPart->status()) < 30 ){
+
+      if( debug ){
+	std::cout << "-------" << std::endl;
+	std::cout << "found photon, status: " << iPart->status() << std::endl;
+	std::cout << "pt: " << iPart->pt() << " eta: " << iPart->eta() << " phi: " << iPart->phi() << " e: " << iPart->energy() << std::endl;
+      }
+      
+      genPhotonPt.push_back( iPart->pt() );
+      genPhotonEta.push_back( iPart->eta() );
+      genPhotonPhi.push_back( iPart->phi() );
+      genPhotonE.push_back( iPart->energy() );
+      
+    }// end photon stuff
+
+  }// end of loop over gen-particles
+
   // -- Monte Carlo Event Weight
   eventWeight = 1.0 ;
   edm::Handle< GenEventInfoProduct > genEventInfo;
@@ -353,6 +579,22 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   nVrtx = vertices->size() ;
 
   reco::Vertex::Point vtxpos = (vertices->size() > 0 ? (*vertices)[0].position() : reco::Vertex::Point());
+
+  // rho variables &&&&&&&&&&&&&&&&
+
+  edm::Handle< double > rho;
+  iEvent.getByLabel("fixedGridRhoFastjetAll",rho);
+  fixedGridRhoFastjetAll = *rho;
+  iEvent.getByLabel("fixedGridRhoFastjetAllCalo",rho);
+  fixedGridRhoFastjetAllCalo = *rho;
+  iEvent.getByLabel("fixedGridRhoFastjetCentralCalo",rho);
+  fixedGridRhoFastjetCentralCalo = *rho;
+  iEvent.getByLabel("fixedGridRhoFastjetCentralChargedPileUp",rho);
+  fixedGridRhoFastjetCentralChargedPileUp = *rho;
+  iEvent.getByLabel("fixedGridRhoFastjetCentralNeutral",rho);
+  fixedGridRhoFastjetCentralNeutral = *rho;
+
+  // &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
   // MET
   // ===========================
@@ -403,6 +645,9 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   Handle< View<pat::Muon> > muonCands;
   iEvent.getByLabel( muonCollection ,muonCands);
 
+  if( debug ) std::cout << "got muon collection" << std::endl;
+  
+
   muonPt.clear();
   muonEta.clear();
   muonPhi.clear();
@@ -418,15 +663,25 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
     //if( iMuon->pt() < 10. || fabs( iMuon->eta() ) > 2.4 ) continue ;
 
+    if( debug ){
+      std::cout << "muon pt: " << iMuon->pt() << std::endl;
+      std::cout << "muon eta: " << iMuon->eta() << std::endl;
+      std::cout << "muon phi: " << iMuon->phi() << std::endl;
+    }
+
     muonPt.push_back( iMuon->pt() );
     muonEta.push_back( iMuon->eta() ); 
     muonPhi.push_back( iMuon->phi() );
     muonE.push_back( iMuon->energy() );
     
+    if( debug ) std::cout << "muon isolation" << std::endl;
+
     muonRelIso.push_back( (iMuon->pfIsolationR04().sumChargedHadronPt + std::max(0., iMuon->pfIsolationR04().sumNeutralHadronEt + iMuon->pfIsolationR04().sumPhotonEt - 0.5*iMuon->pfIsolationR04().sumPUPt) )/ iMuon->pt() );
 
     bool pass = false;
     
+    if( debug ) std::cout << "muon ID" << std::endl;
+
     if( iMuon->globalTrack().isNonnull() ){
 
       if( !iMuon->isPFMuon()  || 
@@ -450,42 +705,79 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   // Photon
   // ===========================
   // ---------------------------
+
   /*
-  "photon_hadTowOverEm",&photon_hadTowOverEm);  
-  "photon_sigmaIetaIeta",&photon_sigmaIetaIeta);
-  "photon_pfChargedIso",&photon_pfChargedIso);
-  "photon_pfNeutralIso",&photon_pfNeutralIso);
-  "photon_pfGammaIso",&photon_pfGammaIso);
-  "photon_passElectronConvVeto",&photon_passElectronConvVeto);
+  std::vector< double > photonPt;		    
+  std::vector< double > photonEta;		    
+  std::vector< double > photonPhi;		    
+  std::vector< double > photonE;		    
+  std::vector< double > photon_hadTowOverEm;	    
+  std::vector< double > photon_sigmaIetaIeta;	    
+  std::vector< double > photon_pfChargedIso;	    
+  std::vector< double > photon_pfNeutralIso;	    
+  std::vector< double > photon_pfGammaIso;	    
+  std::vector< double > photon_ConeDR03ecalEtIso;   
+  std::vector< double > photon_ConeDR03hcalEtIso;   
+  std::vector< double > photon_ConeDR03trkPtIso;    
+  std::vector< bool >   photon_passElectronConvVeto;
+  std::vector< bool >   photon_hasPixelSeed;        
+  
+  int NPhotons;
+ 
   */
 
   Handle< View< pat::Photon> > photonCands;
   iEvent.getByLabel( photonCollection ,photonCands);
 
+  if( debug ) std::cout << "got photon collection" << std::endl;
+
+  NPhotons=0;
+  photonPt.clear();		    
+  photonEta.clear();		    
+  photonPhi.clear();		    
+  photonE.clear();		    
+  photon_isEB.clear();
+  photon_genMatched.clear();
+  photon_hadTowOverEm.clear();	    
+  photon_sigmaIetaIeta.clear();	    
+  photon_pfChargedIso.clear();	    
+  photon_pfNeutralIso.clear();	    
+  photon_pfGammaIso.clear();	    
+  photon_ConeDR03ecalEtIso.clear();   
+  photon_ConeDR03hcalEtIso.clear();   
+  photon_ConeDR03trkPtIso.clear();    
+  photon_passElectronConvVeto.clear();
+  photon_hasPixelSeed.clear();        
+
   for( View< pat::Photon >::const_iterator iPhoton = photonCands->begin();
         iPhoton != photonCands->end();
         ++iPhoton){
+
+    if( debug ) {
+      std::cout << "photon pt: " << iPhoton->pt() << std::endl;
+      std::cout << "photon eta: " << iPhoton->eta() << std::endl;
+      std::cout << "photon phi: " << iPhoton->phi() << std::endl;
+    }
 
     photonPt.push_back( iPhoton->pt() );
     photonEta.push_back( iPhoton->eta() ); 
     photonPhi.push_back( iPhoton->phi() );
     photonE.push_back( iPhoton->energy() );
-    
+
+    photon_isEB.push_back( iPhoton->isEB() );
+    photon_genMatched.push_back( iPhoton->genPhoton() != NULL );
     photon_hadTowOverEm.push_back( iPhoton->hadTowOverEm() ) ;
     photon_sigmaIetaIeta.push_back( iPhoton->sigmaIetaIeta() ) ;
-
-    // iso deposits
-    IsoDepositVals isoVals(phIsoValsSrc.size());
-    for (size_t j = 0; j < phIsoValsSrc.size(); ++j) {
-      iEvent.getByLabel(phIsoValsSrc[j], isoVals[j]);
-    }
-
-    photon_pfChargedIso.push_back(   (*(isoVals)[0])[ iPhoton->photonCore() ] ) ;
-    photon_pfGammaIso.push_back(     (*(isoVals)[1])[ iPhoton->photonCore() ] ) ;
-    photon_pfNeutralIso.push_back(   (*(isoVals)[2])[ iPhoton->photonCore() ] ) ;
+    
+    photon_pfChargedIso.push_back(      iPhoton->chargedHadronIso() );
+    photon_pfGammaIso.push_back(        iPhoton->photonIso() );
+    photon_pfNeutralIso.push_back(      iPhoton->neutralHadronIso() );
+    photon_ConeDR03ecalEtIso.push_back( iPhoton->ecalRecHitSumEtConeDR03() );
+    photon_ConeDR03hcalEtIso.push_back( iPhoton->hcalTowerSumEtConeDR03() );
+    photon_ConeDR03trkPtIso.push_back(  iPhoton->trkSumPtSolidConeDR03() );
 
     photon_passElectronConvVeto.push_back( iPhoton->userFloat("passElectronConvVeto") ) ;    
-
+    photon_hasPixelSeed.push_back( iPhoton->hasPixelSeed() );
     NPhotons++;
 
   }
@@ -495,31 +787,44 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   // ---------------------------
 
   // get electrons
-  Handle< std::vector< reco::GsfElectron> > electronCands;
+  Handle< View< pat::Electron > > electronCands;
   iEvent.getByLabel( electronCollection ,electronCands);
 
-  GSFelectronInterface eleTool( electronCollection , conversionsSrc , vtxSrc , beamSpotSrc , rhoIsoSrc , elIsoValsSrc ) ; 
+  if( debug ) std::cout << "got electron collection" << std::endl;
+
+  //GSFelectronInterface eleTool( electronCollection , conversionsSrc , vtxSrc , beamSpotSrc , rhoIsoSrc , elIsoValsSrc ) ; 
 
   electronPt.clear();
   electronEta.clear();
   electronPhi.clear();
   electronE.clear();
-  electronRelIso.clear();
-  electronPassID.clear();
+  electronNeutralIso.clear();
+  electronChargedIso.clear();
+  electronPhotonIso.clear();
 
   NElectrons = 0 ;
 
-  for(unsigned int i = 0 ; i < electronCands->size(); ++i){
-  
-    electronData myEle = eleTool.passIDandISO( iEvent , i ) ;
+  for( View< pat::Electron >::const_iterator iEle = electronCands->begin();
+        iEle != electronCands->end();
+        ++iEle){
 
+    //for(unsigned int i = 0 ; i < electronCands->size(); ++i){
+  
+    //electronData myEle = eleTool.passIDandISO( iEvent , i ) ;
    
-    electronPt.push_back( myEle.pt );
-    electronEta.push_back( myEle.eta ); 
-    electronPhi.push_back( myEle.phi );
-    electronE.push_back( myEle.e );
-    electronRelIso.push_back( myEle.combIso );
-    electronPassID.push_back( myEle.passID );
+    if( debug ) {
+      std::cout << "electron pt: " << iEle->pt() << std::endl;
+      std::cout << "electron eta: " << iEle->eta() << std::endl;
+      std::cout << "electron phi: " << iEle->phi() << std::endl;
+    }
+
+    electronPt.push_back( iEle->pt() );
+    electronEta.push_back( iEle->eta() ); 
+    electronPhi.push_back( iEle->phi() );
+    electronE.push_back( iEle->energy() );
+    electronNeutralIso.push_back( iEle->pfIsolationVariables().sumNeutralHadronEt );
+    electronChargedIso.push_back( iEle->pfIsolationVariables().sumChargedHadronPt );
+    electronPhotonIso.push_back( iEle->pfIsolationVariables().sumPhotonEt );
     NElectrons++;
     
   }
@@ -529,27 +834,30 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   // -------------------
   for ( unsigned int iJetColl = 0 ; iJetColl < jetCollectionList.size() ; iJetColl++ ){
 
-    if( debug ){
+    if( debug ) std::cout << jetCollectionList[ iJetColl ] << std::endl;
 
-      std::cout << jetCollectionList[ iJetColl ] << std::endl;
-
-    }
-
-    Handle< View<reco::Jet> > jetCands;
+    Handle< View<reco::Candidate> > jetCands;
     iEvent.getByLabel( jetCollectionList[ iJetColl ],jetCands);
+    if( debug ) std::cout << "got jet collection" << std::endl;
 
     // set all variables in struct to zero or clear std::vectors
     zeroJetKinematics( *jetKin[ iJetColl ] );
+    if( debug ) std::cout << "reset jet kin struct" << std::endl;
 
     // for calculating missHt
     double negativePx_pt30 = 0.; 
     double negativePy_pt30 = 0.; 
 
-    for(View<reco::Jet>::const_iterator iJet = jetCands->begin();
+    for(View<reco::Candidate>::const_iterator iJet = jetCands->begin();
         iJet != jetCands->end();
         ++iJet){
 
-      //std::cout  << "num. jets: " << jetCands->size() << std::endl;
+      if( debug ){
+	std::cout << "jet pt: " << iJet->pt() << std::endl;
+	std::cout << "jet eta: " << iJet->eta() << std::endl;
+	std::cout << "jet phi: " << iJet->phi() << std::endl;
+	std::cout << "jet mass: " << iJet->mass() << std::endl;
+      }
 
       // kinematic selection for jets
       if ( iJet->pt() > 50. && fabs( iJet->eta() ) < 2.5 ){
@@ -593,56 +901,48 @@ AnalysisTreeFiller::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
  for ( unsigned int iParticleColl = 0 ; iParticleColl < pseudoParticleCollectionList.size() ; iParticleColl++ ){
 
-    if( debug ){
+   if( pseudoParticleCollectionList[ iParticleColl ] == "" ) continue;
 
-      std::cout << pseudoParticleCollectionList[ iParticleColl ] << std::endl;
-
-    }
-
-    Handle< std::vector < math::XYZTLorentzVector > > particleCands;
-    iEvent.getByLabel( pseudoParticleCollectionList[ iParticleColl ],particleCands);
-
-    // set all variables in struct to zero or clear std::vectors
-    zeroJetKinematics( *particleKin[ iParticleColl ] );
-
-    // for calculating missHt
-    double negativePx_pt30 = 0.; 
-    double negativePy_pt30 = 0.; 
-
-    for( unsigned int iParticle = 0; iParticle < particleCands->size(); ++iParticle){
-
-      math::XYZTLorentzVector p4 = (*particleCands)[iParticle] ; 
-
-      // kinematic selection for pseudo particles
-      if ( p4.pt() > 50. && fabs( p4.eta() ) < 2.5 ){
-
-        particleKin[ iParticleColl ]->sumJetMass += p4.mass() ;
-
-      }// end if statement
-
-      // kinematic selection for jets
-      if ( p4.pt() > 30. && fabs( p4.eta() ) < 5. ){
-
-        particleKin[ iParticleColl ]->pt.push_back  (   p4.pt()   );
-        particleKin[ iParticleColl ]->eta.push_back (   p4.eta()  );
-        particleKin[ iParticleColl ]->phi.push_back (   p4.phi()  );
-        particleKin[ iParticleColl ]->mass.push_back(   p4.mass() );
-
-        particleKin[ iParticleColl ]->HT  += p4.pt();
-
-        negativePx_pt30        -= p4.px();
-        negativePy_pt30        -= p4.py();
-
-      }// end if statement
-
-    } // end loop over iParticle
-
-    particleKin[ iParticleColl ]->MHT    = sqrt( pow( negativePx_pt30 , 2 ) + pow( negativePy_pt30 , 2 ) ) ;
-
-    particleKin[ iParticleColl ]->MHTphi = acos( negativePx_pt30 / particleKin[ iParticleColl ]->MHT ) ;
-
-    particleKin[ iParticleColl ]->NJets     = particleKin[ iParticleColl ]->pt.size();
-
+   if( debug ){
+     
+     std::cout << pseudoParticleCollectionList[ iParticleColl ] << std::endl;
+     
+   }
+   
+   Handle< std::vector < math::XYZTLorentzVector > > particleCands;
+   iEvent.getByLabel( pseudoParticleCollectionList[ iParticleColl ],particleCands);
+   
+   // set all variables in struct to zero or clear std::vectors
+   zeroJetKinematics( *particleKin[ iParticleColl ] );
+   
+   // for calculating missHt
+   double negativePx_pt30 = 0.; 
+   double negativePy_pt30 = 0.; 
+   
+   for( unsigned int iParticle = 0; iParticle < particleCands->size(); ++iParticle){
+     
+     math::XYZTLorentzVector p4 = (*particleCands)[iParticle] ; 
+     
+     particleKin[ iParticleColl ]->sumJetMass += p4.mass() ;
+       
+     particleKin[ iParticleColl ]->pt.push_back  (   p4.pt()   );
+     particleKin[ iParticleColl ]->eta.push_back (   p4.eta()  );
+     particleKin[ iParticleColl ]->phi.push_back (   p4.phi()  );
+     particleKin[ iParticleColl ]->mass.push_back(   p4.mass() );
+     
+     particleKin[ iParticleColl ]->HT  += p4.pt();
+     
+     negativePx_pt30        -= p4.px();
+     negativePy_pt30        -= p4.py();
+     
+   } // end loop over iParticle
+   
+   particleKin[ iParticleColl ]->MHT    = sqrt( pow( negativePx_pt30 , 2 ) + pow( negativePy_pt30 , 2 ) ) ;
+   
+   particleKin[ iParticleColl ]->MHTphi = acos( negativePx_pt30 / particleKin[ iParticleColl ]->MHT ) ;
+   
+   particleKin[ iParticleColl ]->NJets     = particleKin[ iParticleColl ]->pt.size();
+   
 
   } // end loop over jet collection list
 

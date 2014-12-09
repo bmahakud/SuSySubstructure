@@ -34,6 +34,7 @@ private:
   
   std::string jetCollection;     // name of jet collection
   double clusterRadius;          // R parameter of anti-kt clustering
+  bool        trim;
   bool        debug;
 };
 

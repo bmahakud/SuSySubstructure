@@ -52,9 +52,10 @@
 JetFatteningProducer::JetFatteningProducer(const edm::ParameterSet& iConfig):
   jetCollection(iConfig.getUntrackedParameter<std::string>("jetCollection","patJetsAK5PFPt30")),
   clusterRadius(iConfig.getUntrackedParameter<double>("clusterRadius",1.2)),
+  trim(iConfig.getUntrackedParameter<bool>("trim",false)),
   debug(iConfig.getUntrackedParameter<bool>("debug",true))
 {
-  //produces< std::vector< reco::Jet > >(jetCollection+"-Subjets");
+  //produces< std::vector< reco::Candidate > >(jetCollection+"-Subjets");
   produces< std::vector< math::XYZTLorentzVector > >(""); //jetCollection+"-FattenedJets"); 
 }
 
@@ -82,7 +83,7 @@ JetFatteningProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   using namespace edm;
 
   // get jet collection
-  Handle< View<reco::Jet> > jetCands;
+  Handle< View<reco::Candidate> > jetCands;
   iEvent.getByLabel(jetCollection,jetCands);
 
   // initialize objects needed for fastjet 
@@ -93,7 +94,7 @@ JetFatteningProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   // -------------------------------------
 
   // syntax is probably not right!!!!
-  //std::auto_ptr< std::vector< reco::Jet > > Subjets ( new std::vector< reco::Jet > () );
+  //std::auto_ptr< std::vector< reco::Candidate > > Subjets ( new std::vector< reco::Candidate > () );
   std::auto_ptr< std::vector< math::XYZTLorentzVector > > fatJet4Vec ( new std::vector< math::XYZTLorentzVector > () );
 
   if( debug ){
@@ -101,7 +102,7 @@ JetFatteningProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
     std::cout << "===================" << std::endl;
   }
 
-  for(View<reco::Jet>::const_iterator iJet = jetCands->begin(); iJet != jetCands->end(); ++iJet){
+  for(View<reco::Candidate>::const_iterator iJet = jetCands->begin(); iJet != jetCands->end(); ++iJet){
       
     if ( debug ) {
 
@@ -126,33 +127,52 @@ JetFatteningProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   }// end loop over jets
 
-	// recluster 
-	fastjet::ClusterSequence cs_aktp12(constituents, aktp12);
-	fatJets = sorted_by_pt(cs_aktp12.inclusive_jets());
+  // recluster 
+  fastjet::ClusterSequence cs_aktp12(constituents, aktp12);
+  fatJets = sorted_by_pt(cs_aktp12.inclusive_jets());
 
-	if( debug ){
-	  
-	  std::cout << "hand clustered jet: " << std::endl;
-	  for ( unsigned int k = 0 ; k < fatJets.size() ; k++){
-	      std::cout << "pt: " << fatJets[ k ].pt() << std::endl;
-	  }
-	  std::cout << "-----------------------" << std::endl;
-	}
-	// ..............................
+  // trim jets                                                                                                                                                        
+  fastjet::Filter trimmer( fastjet::JetDefinition(fastjet::kt_algorithm, 0.2 ) , fastjet::SelectorPtFractionMin( 0.05 ) );
+  
+  if( debug ){
+    
+    std::cout << "hand clustered jet: " << std::endl;
+    for ( unsigned int k = 0 ; k < fatJets.size() ; k++){
+      std::cout << "pt: " << fatJets[ k ].pt() << std::endl;
+    }
+    std::cout << "-----------------------" << std::endl;
+  }
+  // ..............................
 
 
-	// fill vector of XYZTLorentzVector for putting in event
-	for( unsigned int iFatJet = 0 ; iFatJet < fatJets.size() ; iFatJet++ ){
+  // fill vector of XYZTLorentzVector for putting in event
+  for( unsigned int iFatJet = 0 ; iFatJet < fatJets.size() ; iFatJet++ ){
+    
+    if( !trim ){
 
-	  math::XYZTLorentzVector p4( fatJets[iFatJet].px(), 
-	                              fatJets[iFatJet].py(), 
-	                              fatJets[iFatJet].pz(), 
-	                              fatJets[iFatJet].e() ) ;
+      math::XYZTLorentzVector p4( fatJets[iFatJet].px(), 
+				  fatJets[iFatJet].py(), 
+				  fatJets[iFatJet].pz(), 
+				  fatJets[iFatJet].e() ) ;
 
-	  fatJet4Vec->push_back( p4 ) ; 
+      fatJet4Vec->push_back( p4 ) ; 
 
-	}// done filling XYZTLorentzVector vector
+    }else{
+      
+      fastjet::PseudoJet temp = trimmer( fatJets[iFatJet] );
 
+      math::XYZTLorentzVector p4( temp.px(), 
+				  temp.py(), 
+				  temp.pz(), 
+				  temp.e() 
+				  ) ;
+
+      fatJet4Vec->push_back( p4 ) ; 
+
+    }
+
+  }// done filling XYZTLorentzVector vector
+  
 
   iEvent.put(fatJet4Vec); 
 }

@@ -78,7 +78,7 @@ bool SMSModelFilter::filter(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   comments_const_iterator c_end = product->comments_end();
    
   double mGL  = -1.0;
-  double mSQ  = -1.0;
+  //double mSQ  = -1.0;
   double mLSP = -1.0; 
   double xCHI = -1.0;
 
