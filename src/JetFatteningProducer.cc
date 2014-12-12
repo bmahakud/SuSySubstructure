@@ -24,7 +24,6 @@
 #include "FWCore/Framework/interface/EDProducer.h"
 
 #include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/MakerMacros.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
@@ -56,7 +55,8 @@ JetFatteningProducer::JetFatteningProducer(const edm::ParameterSet& iConfig):
   debug(iConfig.getUntrackedParameter<bool>("debug",true))
 {
   //produces< std::vector< reco::Candidate > >(jetCollection+"-Subjets");
-  produces< std::vector< math::XYZTLorentzVector > >(""); //jetCollection+"-FattenedJets"); 
+  produces< std::vector< TLorentzVector > >(""); //jetCollection+"-FattenedJets"); 
+  produces< double >(""); //jetCollection+"-FattenedJets"); 
 }
 
 
@@ -93,9 +93,8 @@ JetFatteningProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   fastjet::JetDefinition aktp12(fastjet::antikt_algorithm, clusterRadius);  
   // -------------------------------------
 
-  // syntax is probably not right!!!!
-  //std::auto_ptr< std::vector< reco::Candidate > > Subjets ( new std::vector< reco::Candidate > () );
-  std::auto_ptr< std::vector< math::XYZTLorentzVector > > fatJet4Vec ( new std::vector< math::XYZTLorentzVector > () );
+  std::auto_ptr< std::vector< TLorentzVector > > fatJet4Vec ( new std::vector< TLorentzVector > () );
+  std::auto_ptr< double > sumJetMass ( new double (0.0) );
 
   if( debug ){
     std::cout << "new events" << std::endl;
@@ -145,36 +144,43 @@ JetFatteningProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   // ..............................
 
 
-  // fill vector of XYZTLorentzVector for putting in event
+  // fill vector of TLorentzVector for putting in event
   for( unsigned int iFatJet = 0 ; iFatJet < fatJets.size() ; iFatJet++ ){
     
     if( !trim ){
 
-      math::XYZTLorentzVector p4( fatJets[iFatJet].px(), 
-				  fatJets[iFatJet].py(), 
-				  fatJets[iFatJet].pz(), 
-				  fatJets[iFatJet].e() ) ;
-
+      TLorentzVector p4( fatJets[iFatJet].px(), 
+			 fatJets[iFatJet].py(), 
+			 fatJets[iFatJet].pz(), 
+			 fatJets[iFatJet].e() ) ;
+      
       fatJet4Vec->push_back( p4 ) ; 
 
     }else{
       
       fastjet::PseudoJet temp = trimmer( fatJets[iFatJet] );
 
-      math::XYZTLorentzVector p4( temp.px(), 
-				  temp.py(), 
-				  temp.pz(), 
-				  temp.e() 
-				  ) ;
+      TLorentzVector p4( temp.px(), 
+			 temp.py(), 
+			 temp.pz(), 
+			 temp.e() 
+			 ) ;
 
       fatJet4Vec->push_back( p4 ) ; 
 
     }
 
-  }// done filling XYZTLorentzVector vector
+  }// done filling TLorentzVector vector
   
+  for( unsigned int iJet = 0 ; iJet < fatJet4Vec->size() ; iJet++){
+
+    *sumJetMass += fatJet4Vec->at(iJet).M();
+
+  }
 
   iEvent.put(fatJet4Vec); 
+  iEvent.put(sumJetMass);
+ 
 }
 
 
@@ -215,15 +221,21 @@ JetFatteningProducer::endLuminosityBlock(edm::LuminosityBlock const&, edm::Event
 {
 }
 
+
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
 JetFatteningProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
 
+  /*
   edm::ParameterSetDescription desc;
   desc.setUnknown();
   descriptions.addDefault(desc);
+  */
 
 }
+
+
+#include "FWCore/Framework/interface/MakerMacros.h"
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(JetFatteningProducer);
