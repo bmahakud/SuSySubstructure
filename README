@@ -38,7 +38,7 @@ scram b -j8
 
 # The main analyzer is written to run over 
 # the miniAOD data tier
-# https://twiki.cern.ch/twiki/bin/view/CMSPublic/MiniAOD
+# https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMiniAOD
 
 # to run locally 
 
