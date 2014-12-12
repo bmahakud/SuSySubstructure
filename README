@@ -2,6 +2,16 @@ CODE FOR STUDYING SUBSTRUCTURE VARIABLE
 TO BE APPLIED TO SUSY ANALYSES.
 
 
+#### for running on CSA14 samples -- all those in python/13TeV*
+cmsrel CMSSW_7_0_6_patch1
+cd CMSSW_7_0_6_patch1/src
+cmsenv
+
+#### for running on PHYS14 samples -- all those in python/PHYS14
+cmsrel CMSSW_7_2_0
+cd CMSSW_7_2_0/src
+cmsenv
+
 ####################
 # git instructions #
 ####################
@@ -19,11 +29,34 @@ cd AWhitbeck/SuSySubstructure
 
 cd ../../
 
-# compile with scram b
+#compile with 
+scram b -j8
 
-##################
-# Main analyzer  #
-##################
+###########################
+# Main analyzer -- 13 TeV  #
+##########################
+
+# The main analyzer is written to run over 
+# the miniAOD data tier
+# https://twiki.cern.ch/twiki/bin/view/CMSPublic/MiniAOD
+
+# to run locally 
+
+cmsRun miniAOD_test.py < options >
+
+# note options can be found with --help
+# i.e. python SuSySubstructureAnalysis.py --help
+
+# Example:
+# running over T5tttt sample 
+
+cmsRun SuSySubstructureAnalysis.py inputFilesConfig=PHYS14.GJets_HT-200to400_Tune4C_13TeV-madgraph-tauola outputFile=GJets_HT-200to400_Tune4C_13TeV-madgraph-tauola
+
+# root files with flat tree will be saved
+
+###########################
+# Main analyzer -- 8 TeV  #
+##########################
 
 # The main analyzer is written to run over 
 # the LPC SUSY PAT-tuples:
