@@ -20,20 +20,6 @@ process.load("Configuration.StandardSequences.Geometry_cff")
 process.load("Configuration.StandardSequences.MagneticField_cff")
 process.load('Configuration/StandardSequences/FrontierConditions_GlobalTag_cff')
 
-##################################
-# DEFINE MODULES FOR ANALYSIS
-##################################
-
-###############
-# photon stuff
-###############
-
-process.photonProd = cms.EDProducer("PhotonIDisoProducer",
-                                    photonCollection = cms.untracked.InputTag("slimmedPhotons"),
-                                    rhoCollection = cms.untracked.InputTag("fixedGridRhoFastjetAll"), 
-                                    debug = cms.untracked.bool(False)
-                                    )
-
 ###############
 # tree maker
 ###############
@@ -54,18 +40,32 @@ makeTreeTreeFromMiniADO(process,
                 numProcessedEvt=options.numEvents
                         )
 
-#vector<TLorentzVector>      "photonProd"   ""                      "analysis"   
-#vector<double>              "photonProd"   "genMatched"            "analysis"   
-#vector<double>              "photonProd"   "hadTowOverEM"          "analysis"   
-#vector<double>              "photonProd"   "hasPixelSeed"          "analysis"   
-#vector<double>              "photonProd"   "isEB"                  "analysis"   
-#vector<double>              "photonProd"   "pfChargedIso"          "analysis"   
-#vector<double>              "photonProd"   "pfChargedIsoRhoCorr"   "analysis"   
-#vector<double>              "photonProd"   "pfGammaIso"            "analysis"   
-#vector<double>              "photonProd"   "pfGammaIsoRhoCorr"     "analysis"   
-#vector<double>              "photonProd"   "pfNeutralIso"          "analysis"   
-#vector<double>              "photonProd"   "pfNeutralIsoRhoCorr"   "analysis"   
-#vector<double>              "photonProd"   "sigmaIetaIeta"         "analysis" 
+##################################
+# DEFINE MODULES FOR ANALYSIS
+##################################
+
+###############
+# gen stuff
+###############
+
+process.genParticles = cms.EDProducer("genParticlesProducer",
+                                      genCollection = cms.untracked.InputTag("prunedGenParticles"),
+                                      debug = cms.untracked.bool(False)
+                                      )
+
+process.TreeMaker2.VectorTLorentzVector.append("genParticles(genParticles)")
+process.TreeMaker2.VectorInt.append("genParticles:PDGid(genParticles_PDGid)")
+process.TreeMaker2.VectorInt.append("genParticles:parent(genParticles_parent)")
+
+###############
+# photon stuff
+###############
+
+process.photonProd = cms.EDProducer("PhotonIDisoProducer",
+                                    photonCollection = cms.untracked.InputTag("slimmedPhotons"),
+                                    rhoCollection = cms.untracked.InputTag("fixedGridRhoFastjetAll"), 
+                                    debug = cms.untracked.bool(False)
+                                    )
 
 #process.TreeMaker2.debug = True
 process.TreeMaker2.VectorTLorentzVector.append("photonProd")
@@ -87,7 +87,13 @@ process.TreeMaker2.VectorDouble.append("photonProd:sigmaIetaIeta(photon_sigmaIet
 
 #ak12 jets
 from RecoJets.JetProducers.ak5PFJets_cfi import *
-process.ak1p2Jets = ak5PFJets.clone(src = cms.InputTag("packedPFCandidates"),
+
+process.chsPFCandidates = cms.EDFilter("CandPtrSelector", 
+                                       src = cms.InputTag("packedPFCandidates"), 
+                                       cut = cms.string("fromPV")
+                                       )
+
+process.ak1p2Jets = ak5PFJets.clone(src = cms.InputTag("chsPFCandidates"),
                                     rParam = cms.double(1.2),
                                     useTrimming = cms.bool(True),
                                     rFilt = cms.double(0.2),
@@ -109,7 +115,17 @@ process.ak1p2Jets4Vec = cms.EDProducer("fourVectorProducer",
 process.TreeMaker2.VectorTLorentzVector.append("ak1p2Jets4Vec(ak1p2Jets)")
 process.TreeMaker2.VarsDouble.append("ak1p2sumJetMass(ak1p2Jets_sumJetMass)")
 
-process.ak1p2JetsNoTrim = ak5PFJets.clone(src = cms.InputTag("packedPFCandidates"),
+# nsubjettiness stuff
+process.nSubjettiness = cms.EDProducer("NsubjettinessProducer",
+                                       jetCollection = cms.untracked.string("ak1p2Jets")
+                                       )
+
+process.TreeMaker2.VectorDouble.append("nSubjettiness:tau1(ak1p2Jets_tau1)")
+process.TreeMaker2.VectorDouble.append("nSubjettiness:tau2(ak1p2Jets_tau2)")
+process.TreeMaker2.VectorDouble.append("nSubjettiness:tau3(ak1p2Jets_tau3)")
+process.TreeMaker2.VectorDouble.append("nSubjettiness:tau4(ak1p2Jets_tau4)")
+
+process.ak1p2JetsNoTrim = ak5PFJets.clone(src = cms.InputTag("chsPFCandidates"),
                                           rParam = cms.double(1.2),
                                           useTrimming = cms.bool(False),
                                           rFilt = cms.double(0.2),
@@ -139,6 +155,7 @@ process.fattenedJets = cms.EDProducer("JetFatteningProducer",
                                      debug         = cms.untracked.bool(False)
                                      )
 
+process.TreeMaker2.VectorTLorentzVector.append("fattenedJets(ak1p2JetsReclust)")
 process.TreeMaker2.VarsDouble.append("fattenedJets:sumJetMass(fattenedJets_sumJetMass)")
 
 
@@ -163,9 +180,12 @@ if options.files!=[] :
 
 process.WriteTree = cms.Path( process.Baseline * 
                               process.LostLepton *
+                              process.genParticles * 
                               process.photonProd *
+                              process.chsPFCandidates * 
                               process.ak1p2Jets * 
                               process.ak1p2sumJetMass * 
+                              process.nSubjettiness *
                               process.ak1p2Jets4Vec *
                               process.ak1p2JetsNoTrim *
                               process.ak1p2NoTrimSumJetMass * 
