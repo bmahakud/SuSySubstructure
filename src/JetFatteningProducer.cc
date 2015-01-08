@@ -56,7 +56,7 @@ JetFatteningProducer::JetFatteningProducer(const edm::ParameterSet& iConfig):
 {
   //produces< std::vector< reco::Candidate > >(jetCollection+"-Subjets");
   produces< std::vector< TLorentzVector > >(""); //jetCollection+"-FattenedJets"); 
-  produces< double >(""); //jetCollection+"-FattenedJets"); 
+  produces< double >("sumJetMass"); //jetCollection+"-FattenedJets"); 
 }
 
 
@@ -179,7 +179,7 @@ JetFatteningProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   }
 
   iEvent.put(fatJet4Vec); 
-  iEvent.put(sumJetMass);
+  iEvent.put(sumJetMass,"sumJetMass");
  
 }
 

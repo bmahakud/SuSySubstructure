@@ -43,7 +43,7 @@ PhotonIDisoProducer::PhotonIDisoProducer(const edm::ParameterSet& iConfig):
   debug(iConfig.getUntrackedParameter<bool>("debug",true))
 {
   produces< std::vector< TLorentzVector > >(""); 
-  produces< std::vector< double > >("isEB"); 
+  produces< std::vector< double > >("isEB").setBranchAlias( photonCollection.label()+"isEB" );; 
   produces< std::vector< double > >("genMatched"); 
   produces< std::vector< double > >("hadTowOverEM"); 
   produces< std::vector< double > >("sigmaIetaIeta"); 
