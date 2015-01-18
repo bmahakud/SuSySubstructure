@@ -52,6 +52,8 @@ JetFatteningProducer::JetFatteningProducer(const edm::ParameterSet& iConfig):
   jetCollection(iConfig.getUntrackedParameter<std::string>("jetCollection","patJetsAK5PFPt30")),
   clusterRadius(iConfig.getUntrackedParameter<double>("clusterRadius",1.2)),
   trim(iConfig.getUntrackedParameter<bool>("trim",false)),
+  ptCut(iConfig.getUntrackedParameter<double>("ptCut",15.)),
+  etaCut(iConfig.getUntrackedParameter<double>("etaCut",5.0)),
   debug(iConfig.getUntrackedParameter<bool>("debug",true))
 {
   //produces< std::vector< reco::Candidate > >(jetCollection+"-Subjets");
@@ -109,12 +111,16 @@ JetFatteningProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     }// end debug
 
-    constituents.push_back( fastjet::PseudoJet( iJet->px(),
-                                                iJet->py(),
-                                                iJet->pz(),
+
+    if( iJet->pt() > ptCut && fabs( iJet->eta() ) < etaCut ){
+      constituents.push_back( fastjet::PseudoJet( iJet->px(),
+						  iJet->py(),
+						  iJet->pz(),
                                                 iJet->energy()
-                                              )
-                          ) ; 
+						  )
+			      ) ; 
+    }
+
     if( debug ) {
 	       std::cout << "input jets p_{mu}: " 
 		      << iJet->px() << " " 

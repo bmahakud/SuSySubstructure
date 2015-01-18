@@ -32,7 +32,7 @@ makeTreeTreeFromMiniADO(process,
                         MHTMin=options.minMHT,
                         reportEveryEvt=options.reportEvery,
                         testFileName="",
-                        Global_Tag="PHYS14_25_V2::All",
+                         Global_Tag="PHYS14_25_V2::All",
                         MC=True,
                         QCD=True,
                         LostLepton=True,
@@ -56,6 +56,19 @@ process.genParticles = cms.EDProducer("genParticlesProducer",
 process.TreeMaker2.VectorTLorentzVector.append("genParticles(genParticles)")
 process.TreeMaker2.VectorInt.append("genParticles:PDGid(genParticles_PDGid)")
 process.TreeMaker2.VectorInt.append("genParticles:parent(genParticles_parent)")
+
+###############
+# minDeltaPhi
+###############
+
+process.minDeltaPhi = cms.EDProducer("minDeltaPhiProducer",
+                                     jetCollection = cms.untracked.string("HTJets"),
+                                     metCollection = cms.untracked.string("slimmedMETs"),
+                                     debug         = cms.untracked.bool(False)
+                                     )
+
+process.TreeMaker2.VarsDouble.append("minDeltaPhi(minDeltaPhi)")
+process.TreeMaker2.VectorDouble.append("minDeltaPhi:deltaPhiN(deltaPhiN)")
 
 ###############
 # photon stuff
@@ -84,6 +97,20 @@ process.TreeMaker2.VectorDouble.append("photonProd:sigmaIetaIeta(photon_sigmaIet
 ####################
 # sum jet mass 
 ####################
+
+process.ak4Jets = cms.EDProducer("fourVectorProducer",
+                                 particleCollection = cms.untracked.string("MHTJets"),
+                                 debug = cms.untracked.bool(False)
+                                 )
+
+process.TreeMaker2.VectorTLorentzVector.append("ak4Jets(ak4Jets)")
+
+process.ak4GenJets = cms.EDProducer("fourVectorProducer",
+                                    particleCollection = cms.untracked.string("slimmedGenJets"),
+                                    debug = cms.untracked.bool(False)
+                                    )
+
+process.TreeMaker2.VectorTLorentzVector.append("ak4GenJets(ak4GenJets)")
 
 #ak12 jets
 from RecoJets.JetProducers.ak5PFJets_cfi import *
@@ -148,52 +175,41 @@ process.TreeMaker2.VectorTLorentzVector.append("ak1p2JetsNoTrim4Vec(ak1p2JetsNoT
 process.TreeMaker2.VarsDouble.append("ak1p2NoTrimSumJetMass(ak1p2JetsNoTrim_sumJetMass)")
 
 #reclustered ak12 jets
-process.slimmedJetsPt15 = cms.EDFilter("CandPtrSelector",  #"CandViewSelector",
-                                       cut = cms.string  ('pt >15.0 && eta < 5.0 && eta > -5.0'),
-                                       src = cms.InputTag("slimmedJets")
-                                       )
 
-process.slimmedJetsPt20 = cms.EDFilter("CandPtrSelector",  #"CandViewSelector",
-                                       cut = cms.string  ('pt > 20.0 && eta < 5.0 && eta > -5.0'),
-                                       src = cms.InputTag("slimmedJets")
-                                       )
-
-process.slimmedJetsPt30 = cms.EDFilter("CandPtrSelector",  #"CandViewSelector",
-                                       cut = cms.string  ('pt > 30.0 && eta < 5.0 && eta > -5.0'),
-                                       src = cms.InputTag("slimmedJets")
-                                       )
-
-from AllHadronicSUSY.Utils.htdouble_cfi import htdouble
-process.HTpt30eta5 = htdouble.clone(
-    JetTag  = cms.InputTag('slimmedJetsPt30'),
+#process.slimmedJetsPt30 = cms.EDFilter("CandPtrSelector",  #"CandViewSelector",
+#                                          cut = cms.string  ('pt > 30.0 && eta < 5.0 && eta > -5.0'),
+#                                          src = cms.InputTag("slimmedJetsLooseID")
+#                                          )
+from AllHadronicSUSY.Utils.subJetSelection_cfi import SubJetSelection
+process.slimmedJetsPt15 = SubJetSelection.clone(
+    JetTag  = cms.InputTag('slimmedJets'),
+    MinPt                                                                 = cms.double(15),
+    MaxEta                                                                = cms.double(5.0),
     )
-
-process.TreeMaker2.VarsDouble.append("HTpt30eta5(HTpt30eta5)")
-
-from AllHadronicSUSY.Utils.njetint_cfi import njetint
-process.NJetsPt30eta5 = njetint.clone(
-    JetTag  = cms.InputTag('slimmedJetsPt30'),
-    )
-
-process.TreeMaker2.VarsInt.append("NJetsPt30eta5(NJetsPt30eta5)")
 
 process.fattenedJetsPt15 = cms.EDProducer("JetFatteningProducer",
-                                     jetCollection = cms.untracked.string("slimmedJetsPt15"),
-                                     clusterRadius = cms.untracked.double(1.2),
-                                     debug         = cms.untracked.bool(False)
-                                     )
+                                          jetCollection = cms.untracked.string("slimmedJetsPt15"),
+                                          clusterRadius = cms.untracked.double(1.2),
+                                          ptCut         = cms.untracked.double(15.),
+                                          etaCut        = cms.untracked.double(5.0),
+                                          debug         = cms.untracked.bool(False)
+                                          )
 
 process.fattenedJetsPt20 = cms.EDProducer("JetFatteningProducer",
-                                     jetCollection = cms.untracked.string("slimmedJetsPt20"),
-                                     clusterRadius = cms.untracked.double(1.2),
-                                     debug         = cms.untracked.bool(False)
-                                     )
+                                          jetCollection = cms.untracked.string("slimmedJetsPt15"),
+                                          clusterRadius = cms.untracked.double(1.2),
+                                          ptCut         = cms.untracked.double(20.),
+                                          etaCut        = cms.untracked.double(5.0),
+                                          debug         = cms.untracked.bool(False)
+                                          )
 
 process.fattenedJetsPt30 = cms.EDProducer("JetFatteningProducer",
-                                     jetCollection = cms.untracked.string("slimmedJetsPt30"),
-                                     clusterRadius = cms.untracked.double(1.2),
-                                     debug         = cms.untracked.bool(False)
-                                     )
+                                          jetCollection = cms.untracked.string("slimmedJetsPt15"),
+                                          clusterRadius = cms.untracked.double(1.2),
+                                          ptCut         = cms.untracked.double(30.),
+                                          etaCut        = cms.untracked.double(5.0),
+                                          debug         = cms.untracked.bool(False)
+                                          )
 
 process.TreeMaker2.VectorTLorentzVector.append("fattenedJetsPt15(ak1p2JetsPt15Reclust)")
 process.TreeMaker2.VarsDouble.append("fattenedJetsPt15:sumJetMass(ak1p2JetsPt15Reclust_sumJetMass)")
@@ -205,7 +221,7 @@ process.TreeMaker2.VarsDouble.append("fattenedJetsPt30:sumJetMass(ak1p2JetsPt30R
 ## CONFIGURE TFILESERVICE
 
 process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string(options.outputFile+"_SumJetMass_AnalysisTree.root"),
+                                   fileName = cms.string(options.outputFile+"_RA2AnalysisTree.root"),
                                    closeFileFast = cms.untracked.bool(True)
                                    )
 
@@ -223,9 +239,12 @@ if options.files!=[] :
 
 process.WriteTree = cms.Path( process.Baseline * 
                               process.LostLepton *
+                              process.minDeltaPhi *
                               process.genParticles * 
                               process.photonProd *
-                              process.chsPFCandidates * 
+                              process.chsPFCandidates *
+                              process.ak4Jets *
+                              process.ak4GenJets *
                               process.ak1p2Jets * 
                               process.ak1p2sumJetMass * 
                               process.nSubjettiness *
@@ -233,14 +252,11 @@ process.WriteTree = cms.Path( process.Baseline *
                               process.ak1p2JetsNoTrim *
                               process.ak1p2NoTrimSumJetMass * 
                               process.ak1p2JetsNoTrim4Vec *
-                              process.slimmedJetsPt30 * 
-                              process.fattenedJetsPt30 * 
-                              process.slimmedJetsPt20 * 
-                              process.fattenedJetsPt20 * 
                               process.slimmedJetsPt15 * 
+                              process.fattenedJetsPt30 * 
+                              process.fattenedJetsPt20 * 
                               process.fattenedJetsPt15 *
-                              process.NJetsPt30eta5 *
-                              process.HTpt30eta5 *
+                              
                               process.TreeMaker2 
                               )
 

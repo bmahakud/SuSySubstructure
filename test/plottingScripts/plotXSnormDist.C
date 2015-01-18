@@ -4,6 +4,13 @@
 #include "TCanvas.h"
 #include "TROOT.h"
 
+/* 
+   current this code is configured to run on the 
+   official RA2 trees https://twiki.cern.ch/twiki/bin/viewauth/CMS/TreeMaker
+   from my personal production, which includes fat jet information run over the 
+   PHYS14 samples: ~awhitbe1/eos/PHYS14productionV0/skims/
+*/
+
 void plotXSnormDist(char* drawVar = "MET", 
 		    char* cutString = "HT>500&&NJets>=3&&NJets<=999&&DeltaPhi1>.5&&DeltaPhi2>.5&&DeltaPhi3>.3", 
 		    int nBins = 40,
