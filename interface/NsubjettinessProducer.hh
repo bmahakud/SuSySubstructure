@@ -1,3 +1,8 @@
+//Author
+//Bibhuprasad Mahakud
+//email: bmahakud@cern.ch
+
+
 #include <DataFormats/ParticleFlowCandidate/interface/PFCandidate.h>
 #include "TTree.h"
 #include <fastjet/ClusterSequence.hh>
@@ -22,20 +27,6 @@ public:
 private:
 
 
-   // struct jetKinematics {
-
-
-   // std::vector< double > pt;
-   // std::vector< double > eta;
-   // std::vector< double > mass;
-   // std::vector< double > phi;
-
-
-
-  // } 
-
-
-
   virtual void beginJob() ;
   virtual void produce(edm::Event&, const edm::EventSetup&);
   virtual void endJob() ;
@@ -53,6 +44,7 @@ private:
   // --------------- members ---------------------
   
   std::string jetCollection;     // name of jet collection
+  std::string particleCollection;
   double      clusterRadius;     // jet clustering radius
   double      trimPtFracMin;     // %pt for trimming
   bool        trimJets;          // apply trimming
@@ -61,23 +53,6 @@ private:
   double      subjetRcut;        // min delta R between subjets
   double      subjetPtImbalance; // maximum imbalance between jet and subjet 
   bool        debug;
-  TTree* NsubjettinessTree;
-
-
-
-
-
-
-
-
-
-
-
- 
-
-
-
-
 
 
 };
