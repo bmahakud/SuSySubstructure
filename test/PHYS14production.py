@@ -218,6 +218,30 @@ process.TreeMaker2.VarsDouble.append("fattenedJetsPt20:sumJetMass(ak1p2JetsPt20R
 process.TreeMaker2.VectorTLorentzVector.append("fattenedJetsPt30(ak1p2JetsPt30Reclust)")
 process.TreeMaker2.VarsDouble.append("fattenedJetsPt30:sumJetMass(ak1p2JetsPt30Reclust_sumJetMass)")
 
+# ak4 jets
+
+process.ak4JetsPt10Selector = cms.EDProducer("SubJetSelection",
+                                           JetTag = cms.InputTag("slimmedJets"),
+                                           MinPt  = cms.double(10),
+                                           MaxEta = cms.double(5.0),
+                                           applyLooseID = cms.untracked.bool(True)
+                                           )
+
+process.ak4JetsPt10 = cms.EDProducer("fourVectorProducer",
+                                   particleCollection = cms.untracked.string("ak4JetsPt10Selector"),
+                                   debug = cms.untracked.bool(False)
+                                   )
+
+process.TreeMaker2.VectorTLorentzVector.append("ak4JetsPt10")
+
+### ak4 gen jets
+process.ak4GenJets = cms.EDProducer("fourVectorProducer",
+                                   particleCollection = cms.untracked.string("slimmedGenJets"),
+                                   debug = cms.untracked.bool(False)
+                                   )
+
+process.TreeMaker2.VectorTLorentzVector.append("ak4GenJets")
+
 ## CONFIGURE TFILESERVICE
 
 process.TFileService = cms.Service("TFileService",
@@ -256,6 +280,9 @@ process.WriteTree = cms.Path( process.Baseline *
                               process.fattenedJetsPt30 * 
                               process.fattenedJetsPt20 * 
                               process.fattenedJetsPt15 *
+                              process.ak4JetsPt10Selector *
+                              process.ak4JetsPt10 *
+                              process.ak4GenJets *
                               
                               process.TreeMaker2 
                               )

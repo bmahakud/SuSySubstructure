@@ -16,20 +16,13 @@ cmsenv
 # git instructions #
 ####################
 
-git init
-git config core.sparsecheckout true
-git remote add RA2remote https://github.com/awhitbeck/RA2
-echo SandBox/Skims/ >> .git/info/sparse-checkout
-echo EGamma >> .git/info/sparse-checkout
-git pull RA2remote master
-
-git clone https://github.com/awhitbeck/SuSySubstructure.git AWhitbeck/SuSySubstructure 
+git clone https://github.com/adrager/RA2_2014 .
+git checkout --track origin/work
+git clone https://github.com/awhitbeck/SuSySubstructure.git AWhitbeck/SuSySubstructure
 cd AWhitbeck/SuSySubstructure
 ./retrieveFastJetTools.sh
-
 cd ../../
-
-#compile with 
+#compile with
 scram b -j8
 
 ###########################
