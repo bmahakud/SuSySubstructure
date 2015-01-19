@@ -16,7 +16,7 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
-#include "AWhitbeck/SuSySubstructure/interface/NsubjettinessProducer.h"
+#include "AWhitbeck/SuSySubstructure/interface/NsubjettinessProducer.hh"
 
 #include "TH1.h"
 #include "TH2.h"
