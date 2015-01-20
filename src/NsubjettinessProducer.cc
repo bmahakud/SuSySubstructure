@@ -16,7 +16,7 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
-#include "AWhitbeck/SuSySubstructure/interface/NsubjettinessProducer.hh"
+#include "AWhitbeck/SuSySubstructure/interface/NsubjettinessProducer.h"
 
 #include "TH1.h"
 #include "TH2.h"
@@ -50,6 +50,7 @@ NsubjettinessProducer::NsubjettinessProducer(const edm::ParameterSet& iConfig):
   subjetRcut(iConfig.getUntrackedParameter<double>("subjetRcut",0.15)),
   subjetPtImbalance(iConfig.getUntrackedParameter<double>("subjetPtImbalance",.15)),
   debug(iConfig.getUntrackedParameter<bool>("debug",true))
+
 {
   //produces< std::vector< reco::Jet > >(jetCollection+"-Subjets");
   produces< std::vector< math::XYZTLorentzVector > >(""); //(jetCollection+"-Subjets"); 
@@ -63,6 +64,10 @@ NsubjettinessProducer::NsubjettinessProducer(const edm::ParameterSet& iConfig):
   produces< std::vector< double > >("ak12Py");
   produces< std::vector< double > >("ak12Pz");
   produces< std::vector< double > >("ak12E"); 
+  
+ produces< std::vector< int > >("NumSubjets");
+ 
+
 
 
 
@@ -133,7 +138,8 @@ NsubjettinessProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup
     std::auto_ptr < std::vector<double> > ak12Py(new std::vector<double>());
     std::auto_ptr < std::vector<double> > ak12Pz(new std::vector<double>());
     std::auto_ptr < std::vector<double> > ak12E(new std::vector<double>());
-
+    
+    std::auto_ptr < std::vector<int> > NumSubjets(new std::vector<int>());
 
 
     fastjet::contrib::Nsubjettiness nSub1_b1KT(1, fastjet::contrib::Njettiness::kt_axes, 1.0, 1.2, 1.2);
@@ -153,7 +159,11 @@ NsubjettinessProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup
   
    fastjet::Filter trimmer1(fastjet::Filter(fastjet::JetDefinition(fastjet::kt_algorithm,0.2),fastjet::SelectorPtFractionMin(0.05)));
 
-  
+   fastjet::contrib::SubjetCountingCA subjetCounter(subjetMassCut,subjetPtImbalance,subjetRcut,subjetPtCut);  
+
+
+
+
         std::vector<fastjet::Transformer const *> transformers;
         transformers.push_back(&trimmer1);
      for(unsigned int j1=0;j1<ak12Jets.size();j1++){//jet loop
@@ -171,6 +181,14 @@ NsubjettinessProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup
     TLorentzVector jet_tr_corr(transformedJet.px(),transformedJet.py(),transformedJet.pz(),transformedJet.e());
 
        if(jet_tr_corr.Pt() > 3.0){
+
+        std::vector<fastjet::PseudoJet> ak12pseudoSubjets ;
+
+        ak12pseudoSubjets = subjetCounter.getSubjets(transformedJet) ;
+
+
+       cout<<"no of subjets = "<<ak12pseudoSubjets.size()<<endl;
+        NumSubjets->push_back(ak12pseudoSubjets.size());
         tau1->push_back( nSub1_b1KT(transformedJet) );
         tau2->push_back( nSub2_b1KT(transformedJet) );
         tau3->push_back( nSub3_b1KT(transformedJet) );
@@ -211,126 +229,13 @@ NsubjettinessProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup
 
 
 
-      Handle< View<reco::Jet> > jetCands;
-      iEvent.getByLabel(jetCollection,jetCands);
-      // initialize objects needed for fastjet 
-      //   // -------------------------------------
-     std::vector<fastjet::PseudoJet> fatJets;//this will store jets clustered out of the PFCands of a ak12Jet(not PFCands of event)
-     std::vector<fastjet::PseudoJet> constituents;
-   
-     fastjet::JetDefinition aktp12(fastjet::antikt_algorithm, clusterRadius);  
-
-  // initialize object for counting subjets
-  if( debug ){
-    std::cout << "subjet declustering parameters:" << std::endl;
-    std::cout << "pt cut: " << subjetPtCut << std::endl;
-    std::cout << "mass cut: " << subjetMassCut << std::endl;
-    std::cout << "pt imbalannce: " << subjetPtImbalance << std::endl;
-    std::cout << "dR cut: " << subjetRcut << std::endl;
-  }
-
-  fastjet::contrib::SubjetCountingCA subjetCounter_pt50(subjetMassCut,subjetPtImbalance,subjetRcut,subjetPtCut);
-  // -------------------------------------
-
-  // syntax is probably not right!!!!
-  //std::auto_ptr< std::vector< reco::Jet > > Subjets ( new std::vector< reco::Jet > () );
-  //std::auto_ptr< std::vector< math::XYZTLorentzVector > > Subjets ( new std::vector< math::XYZTLorentzVector > () );
-
-  if( debug ){
-    std::cout << "new events" << std::endl;
-    std::cout << "===================" << std::endl;
-  }
-
-  int ak12_default=0;
-  for(View<reco::Jet>::const_iterator iJet = jetCands->begin(); iJet != jetCands->end(); ++iJet){
-      ak12_default=ak12_default+1;
-     //std::cout << "Jet Pt( RecoJet producer module): " << iJet->pt() << std::endl;
-
-
-    if ( iJet->pt() < 50. ) continue;
-
-    if ( debug ) {
-
-    //  std::cout << "std jet pt: " << iJet->pt() << std::endl;
-
-    }// end debug
-
-    // get jet constituents
-    constituents.clear();      
-    std::vector< const reco::Candidate * > jetConst = iJet->getJetConstituentsQuick();
-    // loop over jet constituents for iJet
-    // for each jet constituent, add to vector< pseudojet > for reclustering
-    for ( unsigned int  iJetConst = 0 ; iJetConst < jetConst.size() ; iJetConst++ ){
-
-      // get pseudojets to cluster
-      constituents.push_back( fastjet::PseudoJet( jetConst[ iJetConst ]->px(), 
-						  jetConst[ iJetConst ]->py(),
-						  jetConst[ iJetConst ]->pz(),
-						  jetConst[ iJetConst ]->energy() ) );
-
-      if( debug ) {
-	       std::cout << "jet const. p_{mu}: " 
-		      << jetConst[ iJetConst ]->px() << " " 
-		      << jetConst[ iJetConst ]->py() << " " 
-		      << jetConst[ iJetConst ]->pz() << " " 
-		      << jetConst[ iJetConst ]->energy() << std::endl;
-      }// end debug
-      
-    }// end loop over ith jet's constituents
-
-    // recluster 
-    fastjet::ClusterSequence cs_aktp12(constituents, aktp12);
-    fatJets = sorted_by_pt(cs_aktp12.inclusive_jets());
-    
-      
-
-
-    // sanity checks.................
-    if( debug && fatJets.size() > 1 ) std::cout << "ERROR: " << fatJets.size() << " were clustered, but only 1 was expected. \n Only the first jet will be used." << std::endl;
-    
-    
-    if( debug ){
-      
-      std::cout << "std Jet collection: " << iJet->pt() << std::endl;
-      
-      std::cout << "hand clustered jet: " << std::endl;
-      for ( unsigned int k = 0 ; k < fatJets.size() ; k++){
-	      std::cout << "pt: " << fatJets[ k ].pt() << std::endl;
-      }
-      std::cout << "-----------------------" << std::endl;
-    }
-    // ..............................
-
-    // trim jets
-    fastjet::Filter trimmer( aktp12 , fastjet::SelectorPtFractionMin( trimPtFracMin ) );
-
-    // decluster jets into subjets
-    std::vector<fastjet::PseudoJet> pseudoSubjets ; 
-    if( trimJets )
-      pseudoSubjets = subjetCounter_pt50.getSubjets( trimmer( fatJets[ 0 ] ) ) ; 
-    else
-      pseudoSubjets = subjetCounter_pt50.getSubjets( fatJets[ 0 ] ) ;
-
-  //    n_subjets.push_back(pseudoSubjets.size());
-
-
-    for( unsigned int iSubjet = 0 ; iSubjet < pseudoSubjets.size() ; iSubjet++ ){
-
-      math::XYZTLorentzVector p4( pseudoSubjets[iSubjet].px(), 
-                                  pseudoSubjets[iSubjet].py(), 
-                                  pseudoSubjets[iSubjet].pz(), 
-                                  pseudoSubjets[iSubjet].e() ) ;
-
-    //  Subjets->push_back( p4 ) ; 
-
-    }
-
-  }// end loop over jets
 
 
  // cout<<"Default ak12 num jets trimmed ="<<ak12_default<<endl;
 
  // iEvent.put(Subjets) ; //,   jetCollection+"-Subjets"   );
+
+  iEvent.put(NumSubjets,"NumSubjets");
   iEvent.put(ak12Px,"ak12Px");
   iEvent.put(ak12Py,"ak12Py");
   iEvent.put(ak12Pz,"ak12Pz");
